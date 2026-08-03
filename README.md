@@ -90,15 +90,39 @@ documentada aqui:
 
 ## Status do projeto
 
-🟠 **Concepção / Planejamento.** Ainda não há código de aplicação. O próximo
-passo é executar a **Fase 0** e a **Fase 1 (MVP)** do
+🟢 **Fase 0 — Fundação em andamento.** O monorepo já tem o esqueleto do backend
+(Django + DRF) e do frontend (PWA Ionic + React), com PSP de PIX e provedor de
+IA atrás de interfaces (stubs). Próximo: **Fase 1 (MVP)** do
 [`CHECKLIST.md`](./CHECKLIST.md).
 
-### Como contribuir agora
+## Estrutura do monorepo
 
-1. Leia o [`CHECKLIST.md`](./CHECKLIST.md) e o [`docs/ROADMAP.md`](./docs/ROADMAP.md).
-2. Valide/ajuste a stack em [`docs/ARQUITETURA.md`](./docs/ARQUITETURA.md).
-3. Revise o [modelo de dados](./docs/MODELO-DE-DADOS.md) antes de iniciar o código.
+```
+NaviGo/
+├── api/                # Backend Python (Django + DRF)
+├── web/                # Frontend PWA (Ionic + React + Vite)
+├── docs/               # Documentação do projeto
+├── docker-compose.yml  # PostgreSQL + Redis (dev)
+└── CHECKLIST.md        # Checklist de desenvolvimento
+```
+
+## Como rodar (desenvolvimento)
+
+```bash
+# 1) Infraestrutura (opcional — sem isso, a API usa SQLite)
+docker compose up -d
+
+# 2) Backend (API)  — requer uv (https://docs.astral.sh/uv/)
+cd api && uv sync
+uv run python manage.py migrate
+uv run python manage.py runserver      # http://localhost:8000
+
+# 3) Frontend (PWA) — em outro terminal
+cd web && npm install
+npm run dev                            # http://localhost:5173
+```
+
+Teste rápido da API: `GET http://localhost:8000/api/v1/health/`.
 
 ---
 

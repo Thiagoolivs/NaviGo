@@ -1,0 +1,53 @@
+[project]
+name = "navigo-api"
+version = "0.1.0"
+description = "NaviGo API — plataforma de organização de viagens em grupo"
+requires-python = ">=3.11"
+dependencies = [
+    "django>=5.0,<5.2",
+    "djangorestframework>=3.15",
+    "django-cors-headers>=4.4",
+    "django-environ>=0.11",
+    "psycopg[binary]>=3.2",
+    "celery>=5.4",
+    "redis>=5.0",
+    "gunicorn>=22.0",
+    "uvicorn>=0.30",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "django-stubs>=5.0",
+    "djangorestframework-stubs>=3.15",
+    "pytest>=8.3",
+    "pytest-django>=4.9",
+    "factory-boy>=3.3",
+]
+
+# Aplicação (não é um pacote a ser "buildado"): o uv só gerencia o venv/deps.
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["**/migrations/*"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "DJ"]
+
+[tool.mypy]
+python_version = "3.11"
+plugins = ["mypy_django_plugin.main"]
+ignore_missing_imports = true
+exclude = ['migrations/']
+
+[tool.django-stubs]
+django_settings_module = "navigo.settings"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "navigo.settings"
+python_files = ["tests.py", "test_*.py", "*_test.py"]
+pythonpath = ["."]
