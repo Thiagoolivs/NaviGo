@@ -35,11 +35,20 @@ DJANGO_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites",
 ]
 
 THIRD_PARTY_APPS = [
     "rest_framework",
+    "rest_framework.authtoken",
     "corsheaders",
+    "anymail",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
+    "dj_rest_auth",
+    "dj_rest_auth.registration",
 ]
 
 LOCAL_APPS = [
@@ -62,6 +71,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
@@ -107,6 +117,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # --- API (DRF) --------------------------------------------------------------
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
+        "dj_rest_auth.jwt_auth.JWTCookieAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
@@ -118,6 +129,59 @@ REST_FRAMEWORK = {
 
 # --- CORS (para o PWA) ------------------------------------------------------
 CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS")
+# O PWA envia o cookie de autenticação (JWT httpOnly).
+CORS_ALLOW_CREDENTIALS = True
+
+# --- Autenticação: allauth + dj-rest-auth -----------------------------------
+SITE_ID = 1
+
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+]
+
+# Login por e-mail; o username é gerado automaticamente a partir do e-mail.
+ACCOUNT_LOGIN_METHODS = {"email"}
+ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
+ACCOUNT_USER_MODEL_USERNAME_FIELD = "username"
+# "optional" (dev) não bloqueia o cadastro; use "mandatory" em produção.
+ACCOUNT_EMAIL_VERIFICATION = env("ACCOUNT_EMAIL_VERIFICATION", default="optional")
+
+# JWT em cookie httpOnly (mais seguro que guardar token no PWA).
+REST_AUTH = {
+    "USE_JWT": True,
+    "JWT_AUTH_COOKIE": "navigo-auth",
+    "JWT_AUTH_REFRESH_COOKIE": "navigo-refresh",
+    "JWT_AUTH_HTTPONLY": True,
+    "JWT_AUTH_SAMESITE": "Lax",
+    "SESSION_LOGIN": False,
+    "REGISTER_SERIALIZER": "apps.accounts.serializers.NaviGoRegisterSerializer",
+}
+
+# Login social — Google. As credenciais são definidas depois, via ambiente:
+#   GOOGLE_OAUTH_CLIENT_ID / GOOGLE_OAUTH_CLIENT_SECRET
+# O endpoint já existe em /api/v1/auth/google/.
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "APP": {
+            "client_id": env("GOOGLE_OAUTH_CLIENT_ID", default=""),
+            "secret": env("GOOGLE_OAUTH_CLIENT_SECRET", default=""),
+            "key": "",
+        },
+        "SCOPE": ["profile", "email"],
+        "AUTH_PARAMS": {"access_type": "online"},
+    }
+}
+
+# --- E-mail (caminho para o Resend via Anymail) -----------------------------
+# Dev: imprime no console. Produção: aponte EMAIL_BACKEND para o Resend:
+#   EMAIL_BACKEND=anymail.backends.resend.EmailBackend
+#   RESEND_API_KEY=...
+EMAIL_BACKEND = env(
+    "EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend"
+)
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="NaviGo <nao-responder@navigo.app>")
+ANYMAIL = {"RESEND_API_KEY": env("RESEND_API_KEY", default="")}
 
 # --- Celery (jobs assíncronos) ----------------------------------------------
 CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://localhost:6379/0")

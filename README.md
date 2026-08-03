@@ -64,6 +64,7 @@ documentada aqui:
 |-----------|----------|
 | 📋 [`CHECKLIST.md`](./CHECKLIST.md) | **Checklist de desenvolvimento** por fases (comece por aqui) |
 | 🗺️ [`docs/ROADMAP.md`](./docs/ROADMAP.md) | Roadmap estratégico: MVP → Pro → Business → longo prazo |
+| 🖼️ [`docs/TELAS-E-FLUXOS.md`](./docs/TELAS-E-FLUXOS.md) | Telas e fluxos do sistema (organizador e participante) |
 | 🎯 [`docs/PRODUTO.md`](./docs/PRODUTO.md) | Especificação do produto: personas, valor, jornada, planos |
 | 🏛️ [`docs/ARQUITETURA.md`](./docs/ARQUITETURA.md) | Stack recomendada, arquitetura, integrações (PIX/IA), LGPD |
 | 🗄️ [`docs/MODELO-DE-DADOS.md`](./docs/MODELO-DE-DADOS.md) | Entidades, relacionamentos e diagrama ER |

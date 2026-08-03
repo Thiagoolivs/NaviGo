@@ -13,6 +13,13 @@ dependencies = [
     "redis>=5.0",
     "gunicorn>=22.0",
     "uvicorn>=0.30",
+    # Autenticação: allauth + dj-rest-auth (JWT), Google login
+    "django-allauth>=65.3",
+    "dj-rest-auth>=7.0",
+    "djangorestframework-simplejwt>=5.3",
+    "cryptography>=43",  # exigido pelo provedor Google do allauth (id_token)
+    # E-mail transacional — caminho para o Resend
+    "django-anymail[resend]>=12.0",
 ]
 
 [dependency-groups]

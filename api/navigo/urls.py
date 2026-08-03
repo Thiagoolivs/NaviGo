@@ -8,6 +8,7 @@ from django.urls import include, path
 
 api_v1_patterns = [
     path("", include("apps.common.urls")),
+    path("auth/", include("apps.accounts.urls")),
     # Rotas dos apps entram aqui à medida que forem implementadas:
     # path("trips/", include("apps.trips.urls")),
     # path("payments/", include("apps.payments.urls")),
@@ -15,5 +16,7 @@ api_v1_patterns = [
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("api/v1/", include((api_v1_patterns, "v1"))),
+    # Sem namespace: nomes de URL de terceiros (ex.: allauth) precisam ser
+    # reversíveis globalmente (account_confirm_email, etc.).
+    path("api/v1/", include(api_v1_patterns)),
 ]
