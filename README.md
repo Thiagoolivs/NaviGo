@@ -18,6 +18,9 @@ responde a perguntas simples e um assistente inteligente monta a estrutura da
 viagem, calcula o valor por participante, gera a página de inscrição, controla
 os pagamentos via PIX e acompanha tudo em um painel único.
 
+Funciona como **web app (PWA)**: roda no navegador em desktop/notebook e
+**instala no celular como aplicativo** — tudo a partir de uma base de código só.
+
 **A proposta não é vender software. É vender tranquilidade.**
 
 ### Para quem é
@@ -73,14 +76,15 @@ documentada aqui:
 > Proposta inicial — pode ser ajustada. Detalhes e alternativas em
 > [`docs/ARQUITETURA.md`](./docs/ARQUITETURA.md).
 
-- **Full-stack:** Next.js (App Router) + TypeScript
-- **UI:** Tailwind CSS + shadcn/ui
-- **Banco de dados:** PostgreSQL + Prisma
-- **Auth / Storage:** Supabase (ou Auth.js + S3)
+- **Frontend (PWA):** Ionic + React + TypeScript (Vite) — web + instalável no celular
+- **PWA:** service worker (vite-plugin-pwa), Web Push, pronto para Capacitor (app nativo futuro)
+- **Backend / API:** Python — Django + DRF (alternativa: FastAPI)
+- **Banco de dados:** PostgreSQL · **Jobs:** Celery + Redis
+- **Auth:** dj-rest-auth + django-allauth
 - **Pagamentos PIX:** PSP brasileiro (Mercado Pago / Asaas / Pagar.me)
-- **IA:** API de LLM (Anthropic Claude / OpenAI)
-- **Notificações:** E-mail (Resend) + WhatsApp (API oficial)
-- **Deploy:** Vercel + banco gerenciado (Supabase / Neon / Railway)
+- **IA:** SDK de LLM (Anthropic Claude / OpenAI)
+- **Notificações:** E-mail (Resend) + WhatsApp + Web Push
+- **Deploy:** API (Railway / Render / Fly) + PWA estático (Vercel / Netlify / CDN)
 
 ---
 

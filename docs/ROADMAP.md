@@ -27,7 +27,8 @@ a construir com segurança.
 ## Fase 1 — MVP
 
 **Objetivo:** permitir que um organizador real conduza **uma viagem inteira de
-ponta a ponta** pela plataforma.
+ponta a ponta** pela plataforma. Entregue como **PWA** — roda no navegador
+(desktop/notebook) e instala no celular como app, com uma base de código única.
 
 - **Escopo (o que entra):**
   - Criação de viagem + assistente de IA (perguntas guiadas)
@@ -81,9 +82,10 @@ ponta a ponta** pela plataforma.
 
 **Objetivo:** evoluir para um **ecossistema completo** de viagens em grupo.
 
-- **Escopo:** app móvel, intermediação financeira (split), marketplace de
-  hotéis e fretamento, fornecedores parceiros, seguro viagem, contratos, IA
-  conectada a APIs reais e dashboards preditivos.
+- **Escopo:** apps nas lojas (iOS/Android) empacotando o PWA via **Capacitor**,
+  intermediação financeira (split), marketplace de hotéis e fretamento,
+  fornecedores parceiros, seguro viagem, contratos, IA conectada a APIs reais e
+  dashboards preditivos.
 - **Critério de saída:** parceiros/fornecedores transacionando na plataforma.
 
 ---

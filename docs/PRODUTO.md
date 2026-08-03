@@ -16,6 +16,9 @@ O NaviGo é um **copiloto inteligente**: acompanha o organizador do planejamento
 à conclusão, reduzindo retrabalho, centralizando pagamentos e automatizando
 tarefas. Não vendemos software — vendemos **tranquilidade**.
 
+> **Entrega:** um **web app (PWA)** — roda no navegador em desktop/notebook e
+> instala no celular como aplicativo, a partir de uma base de código única.
+
 ---
 
 ## 2. O problema
@@ -161,6 +164,7 @@ famílias.
 ## 10. Fora de escopo do MVP
 
 Para manter o MVP enxuto ("sem excesso de funcionalidades"), **ficam para
-depois**: marketplace, seguro viagem, contratos, app móvel, intermediação
-financeira, integrações externas e IA conectada a APIs reais. Ver
+depois**: marketplace, seguro viagem, contratos, apps nativos nas lojas (via
+Capacitor), intermediação financeira, integrações externas e IA conectada a
+APIs reais. Ver
 [`ROADMAP.md`](./ROADMAP.md).

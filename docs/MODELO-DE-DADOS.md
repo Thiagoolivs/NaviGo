@@ -1,7 +1,8 @@
 # 🗄️ Modelo de Dados — NaviGo
 
-Modelo conceitual do domínio. Serve de base para o `schema.prisma`. Nomes de
-entidades em inglês (padrão de código); rótulos em português para clareza.
+Modelo conceitual do domínio. Serve de base para os **Django models** (em
+`api/`). Nomes de entidades em inglês (padrão de código); rótulos em português
+para clareza.
 
 > **Status:** proposta para a Fase 0. Ajuste antes de gerar as migrações.
 
@@ -30,6 +31,7 @@ erDiagram
     Participant }o--o{ RoomGroup : alocado
 
     User ||--o| Subscription : assina
+    User ||--o{ PushSubscription : registra
     Organization ||--o| Subscription : assina
 ```
 
@@ -134,6 +136,14 @@ Gerada pela IA ou criada manualmente.
 - `id`, `recipientId`, `channel` (email | whatsapp | push)
 - `type` (payment_reminder | registration_confirmed | payment_confirmed | ...)
 - `sentAt`, `status`
+
+### PushSubscription (Assinatura de Web Push) — *PWA*
+Registro de um dispositivo/navegador para receber notificações push no PWA.
+- `id`, `userId` (ou `participantId`)
+- `endpoint`, `p256dh`, `auth` (chaves da assinatura Web Push do cliente)
+- `userAgent?`, `createdAt`, `lastUsedAt?`
+
+> É **dado pessoal** (LGPD): permitir revogação e remover em logout/exclusão.
 
 ---
 

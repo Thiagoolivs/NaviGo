@@ -3,8 +3,13 @@
 Checklist acionável para tirar o NaviGo do papel. Organizado por fases; cada
 item é uma tarefa concreta. Marque `[x]` conforme concluir.
 
+> **Arquitetura:** **PWA** (Ionic + React + TypeScript) consumindo uma **API em
+> Python** (Django + DRF), num monorepo — uma base de código que roda no
+> navegador (desktop/notebook) **e** instala no celular como app. Detalhes em
+> [`docs/ARQUITETURA.md`](./docs/ARQUITETURA.md).
+>
 > **Legenda de prioridade:** 🔴 crítico para o MVP · 🟡 importante · 🟢 desejável
-> **Relação com o roadmap estratégico:** ver [`docs/ROADMAP.md`](./docs/ROADMAP.md).
+> **Convenção:** 🖥️ backend/API · 📱 frontend/PWA · Roadmap em [`docs/ROADMAP.md`](./docs/ROADMAP.md).
 
 - [ ] **Fase 0** — Fundação do projeto
 - [ ] **Fase 1** — MVP
@@ -17,113 +22,125 @@ item é uma tarefa concreta. Marque `[x]` conforme concluir.
 ## 🧱 Fase 0 — Fundação do Projeto
 
 ### Decisões e alinhamento
-- [ ] 🔴 Validar/ajustar a stack proposta em [`docs/ARQUITETURA.md`](./docs/ARQUITETURA.md)
+- [ ] 🔴 Validar/ajustar a stack em [`docs/ARQUITETURA.md`](./docs/ARQUITETURA.md)
 - [ ] 🔴 Escolher o PSP de PIX (Mercado Pago, Asaas ou Pagar.me) e criar conta sandbox
 - [ ] 🔴 Escolher o provedor de IA (Claude/OpenAI) e obter chave de API
-- [ ] 🟡 Definir nome de domínio e identidade visual básica (logo, cores, tipografia)
+- [ ] 🟡 Definir domínio e identidade visual básica (logo, cores, tipografia)
 - [ ] 🟡 Escolher a licença do projeto
 
-### Setup do repositório
-- [ ] 🔴 Inicializar o projeto Next.js + TypeScript
-- [ ] 🔴 Configurar Tailwind CSS + shadcn/ui
-- [ ] 🔴 Configurar ESLint + Prettier + `.editorconfig`
-- [ ] 🔴 Adicionar `.gitignore`, `.env.example` e `.nvmrc`
-- [ ] 🟡 Configurar Husky + lint-staged (checagens no pre-commit)
-- [ ] 🟡 Definir convenção de commits (Conventional Commits) e template de PR
-- [ ] 🟢 Configurar Storybook para componentes de UI
+### Monorepo e ferramentas
+- [ ] 🔴 Criar a estrutura de monorepo: `api/` (Python) + `web/` (PWA) + `docs/`
+- [ ] 🔴 `docker-compose.yml` com PostgreSQL + Redis para desenvolvimento
+- [ ] 🔴 Adicionar `.gitignore` (Python + Node), `.env.example` e READMEs por pasta
+- [ ] 🟡 Convenção de commits (Conventional Commits) + template de PR
+- [ ] 🟡 CI (GitHub Actions): lint, typecheck e testes de `api/` e `web/`
 
-### Banco de dados e infra
-- [ ] 🔴 Provisionar PostgreSQL (Supabase/Neon/Railway) — ambientes dev e prod
-- [ ] 🔴 Configurar Prisma e traduzir o [modelo de dados](./docs/MODELO-DE-DADOS.md) em `schema.prisma`
-- [ ] 🔴 Rodar a primeira migração e o seed inicial
-- [ ] 🟡 Configurar variáveis de ambiente por ambiente (dev/staging/prod)
-- [ ] 🟡 Configurar CI (GitHub Actions): lint, typecheck, testes, build
-- [ ] 🟢 Configurar deploy automático (Vercel) por branch/preview
+### 🖥️ Backend/API (Django + DRF)
+- [ ] 🔴 `startproject` + apps (`accounts`, `trips`, `participants`, `payments`, `notifications`, `ai`)
+- [ ] 🔴 Dependências com **uv** (ou Poetry) + `pyproject.toml`
+- [ ] 🔴 **Ruff** (lint+format) + **mypy** + **pre-commit**
+- [ ] 🔴 Traduzir o [modelo de dados](./docs/MODELO-DE-DADOS.md) em **Django models** + `migrate`
+- [ ] 🔴 Configurar **DRF** + versionamento de API (`/api/v1`) + **CORS** para o PWA
+- [ ] 🔴 Seed inicial (management command/fixtures)
+- [ ] 🟡 **Celery + Redis** para tarefas assíncronas
+- [ ] 🟡 **pytest** + `pytest-django` + `factory_boy`
+- [ ] 🟢 Deploy da API (Railway/Render/Fly) com Gunicorn + workers Uvicorn
+
+### 📱 Frontend/PWA (Ionic + React + Vite)
+- [ ] 🔴 Inicializar app **Ionic React + TypeScript** (Vite)
+- [ ] 🔴 Configurar **ESLint + Prettier** + checagem de tipos
+- [ ] 🔴 Cliente da API (fetch/axios + React Query) e gestão de sessão/token
+- [ ] 🔴 **PWA**: `manifest.webmanifest` + ícones + **service worker** (`vite-plugin-pwa`/Workbox)
+- [ ] 🔴 Instalação no celular ("adicionar à tela inicial") + tela cheia testadas
+- [ ] 🟡 Layout **mobile-first** e responsivo (funciona bem em desktop e celular)
+- [ ] 🟡 Estado offline básico (shell em cache + mensagem de "sem conexão")
+- [ ] 🟢 `capacitor.config.ts` preparado (empacotamento nativo futuro, sem reescrita)
+- [ ] 🟢 Vitest + Testing Library
 
 ### Qualidade e observabilidade (base)
-- [ ] 🟡 Configurar framework de testes (Vitest/Jest + Testing Library)
-- [ ] 🟡 Configurar testes end-to-end (Playwright)
-- [ ] 🟢 Configurar monitoramento de erros (Sentry) e analytics de produto
+- [ ] 🟡 Playwright (e2e no PWA, incluindo viewport mobile)
+- [ ] 🟢 Sentry (front e back) + analytics de produto
 
 ---
 
 ## 🚀 Fase 1 — MVP
 
-> Escopo mínimo para uma viagem real ser organizada de ponta a ponta.
-> "Sem excesso de funcionalidades."
+> Escopo mínimo para organizar uma viagem real de ponta a ponta. Entregue como
+> **PWA** desde o início (web + instalável no celular).
 
 ### 1. Autenticação e conta
-- [ ] 🔴 Cadastro e login do organizador (e-mail/senha ou magic link)
+- [ ] 🔴 🖥️ Endpoints de cadastro/login (dj-rest-auth + django-allauth; JWT ou sessão)
+- [ ] 🔴 📱 Telas de cadastro, login e recuperação de senha
 - [ ] 🔴 Login social (Google) — reduz atrito
-- [ ] 🔴 Recuperação de senha
 - [ ] 🟡 Perfil do organizador (nome, telefone, foto, dados PIX)
 - [ ] 🟡 Verificação de e-mail
 
 ### 2. Criar viagem
-- [ ] 🔴 Formulário de criação: nome, destino, data(s), duração, nº de participantes, tipo
-- [ ] 🔴 Tipos de viagem pré-definidos (igreja, escola, família, amigos, corporativa, evento)
-- [ ] 🔴 Página de detalhe/edição da viagem
-- [ ] 🟡 Upload de imagem de capa da viagem
+- [ ] 🔴 🖥️ API de viagem: nome, destino, datas, duração, nº de participantes, tipo
+- [ ] 🔴 📱 Fluxo de criação (formulário guiado, mobile-first)
+- [ ] 🔴 Tipos pré-definidos (igreja, escola, família, amigos, corporativa, evento)
+- [ ] 🟡 Upload de imagem de capa (Pillow + storage)
 - [ ] 🟢 Rascunho vs. publicada (status da viagem)
 
 ### 3. Assistente Inteligente (IA)
-- [ ] 🔴 Fluxo de perguntas guiadas (hospedagem? alimentação? transporte fretado? quartos? grupos? limite de vagas?)
-- [ ] 🔴 Montar a estrutura da viagem automaticamente a partir das respostas
-- [ ] 🔴 Gerar **checklist automático** de tarefas com base no tipo de viagem
-- [ ] 🟡 Sugerir itens de orçamento com base nas respostas
-- [ ] 🟡 Guardrails/limites de custo e tratamento de erros da API de IA
+- [ ] 🔴 🖥️ Serviço de IA (SDK anthropic/openai) que monta a estrutura da viagem
+- [ ] 🔴 📱 Fluxo de perguntas guiadas (hospedagem? alimentação? transporte? quartos? grupos? vagas?)
+- [ ] 🔴 Gerar **checklist automático** de tarefas por tipo de viagem
+- [ ] 🟡 Sugerir itens de orçamento a partir das respostas
+- [ ] 🟡 Guardrails: validar saída, limitar custo/tokens, fallback em falha
 - [ ] 🟢 Sugerir cronograma/roteiro inicial
 
 ### 4. Orçamento e precificação
-- [ ] 🔴 Cadastro de itens de custo por categoria (transporte, hospedagem, alimentação, ingressos, extras)
-- [ ] 🔴 Cálculo automático do **valor por participante**
-- [ ] 🔴 Configuração de margem de segurança e exibição do custo total
-- [ ] 🟡 Custos fixos vs. custos por pessoa
-- [ ] 🟢 Simulação de cenários (ex.: variação por nº de participantes)
+- [ ] 🔴 🖥️ Cadastro de custos por categoria (transporte, hospedagem, alimentação, ingressos, extras)
+- [ ] 🔴 🖥️ **Cálculo do valor por participante** em camada de serviço pura (testável com pytest)
+- [ ] 🔴 Margem de segurança + custo total
+- [ ] 🔴 📱 Tela de orçamento com valor por pessoa em tempo real
+- [ ] 🟡 Custos fixos (rateados) vs. por pessoa
+- [ ] 🟢 Simulação de cenários (variação por nº de participantes)
 
 ### 5. Página pública e convites
-- [ ] 🔴 Página pública da viagem (informações + botão de inscrição)
-- [ ] 🔴 Link de inscrição único (slug) por viagem
-- [ ] 🔴 Geração de **QR Code** do convite
+- [ ] 🔴 🖥️ Endpoint público da viagem por `slug` + geração de convite
+- [ ] 🔴 📱 Página pública (informações + inscrição), renderizável e compartilhável
+- [ ] 🔴 Geração de **QR Code** do convite (lib no back ou front)
 - [ ] 🔴 Formulário de inscrição do participante (dados + termos)
-- [ ] 🟡 Controle de limite de vagas (fecha inscrições ao lotar)
+- [ ] 🟡 Controle de limite de vagas (fecha ao lotar)
 - [ ] 🟢 Lista de espera quando esgotar
 
 ### 6. Participantes
-- [ ] 🔴 Cadastro/listagem de participantes por viagem
-- [ ] 🔴 Status do participante (inscrito, confirmado, cancelado)
-- [ ] 🟡 Cadastro manual de participante pelo organizador
+- [ ] 🔴 🖥️ API de participantes + status (inscrito, confirmado, cancelado)
+- [ ] 🔴 📱 Listagem e detalhe do participante
+- [ ] 🟡 Cadastro manual pelo organizador
 - [ ] 🟡 Campos personalizados (documento, contato de emergência, restrições)
 - [ ] 🟢 Divisão em quartos/grupos
 
 ### 7. Pagamentos via PIX
-- [ ] 🔴 Integração com o PSP escolhido (sandbox → produção)
-- [ ] 🔴 Geração de **QR Code PIX** por participante/parcela
-- [ ] 🔴 Confirmação automática via webhook e **baixa do pagamento**
-- [ ] 🔴 Controle de parcelas (valor, vencimento, status)
-- [ ] 🔴 Painel de inadimplência (quem pagou, quem deve)
-- [ ] 🟡 **Lembretes automáticos** de cobrança
+- [ ] 🔴 🖥️ Integração com o PSP (sandbox → produção) atrás de uma interface própria
+- [ ] 🔴 🖥️ Geração de **QR Code PIX** por parcela
+- [ ] 🔴 🖥️ **Webhook** validado por assinatura e **idempotente** → baixa automática
+- [ ] 🔴 🖥️ Controle de parcelas (valor, vencimento, status)
+- [ ] 🔴 📱 Tela de pagamento do participante (QR + status) e painel de inadimplência
+- [ ] 🟡 **Lembretes automáticos** de cobrança (tarefas Celery)
 - [ ] 🟡 Conciliação e tratamento de estorno/falha
 - [ ] 🟢 Comprovante/recibo de pagamento
 
 ### 8. Painel do organizador
-- [ ] 🔴 Visão geral: participantes, vagas restantes, arrecadado vs. meta
-- [ ] 🔴 Lista de pagamentos e inadimplentes
-- [ ] 🔴 Checklist e tarefas pendentes
+- [ ] 🔴 🖥️ Agregações (arrecadado vs. meta, vagas, inadimplência) via ORM
+- [ ] 🔴 📱 Dashboard: participantes, vagas restantes, pagamentos, tarefas
 - [ ] 🟡 Repositório de documentos da viagem
 - [ ] 🟢 Indicadores/gráficos financeiros básicos
 
 ### 9. Notificações
-- [ ] 🔴 E-mail transacional (confirmação de inscrição, pagamento, lembretes)
-- [ ] 🟡 Notificações via WhatsApp (API oficial)
+- [ ] 🔴 🖥️ E-mail transacional (Resend/SES) via Celery
+- [ ] 🟡 📱 **Web Push** (VAPID): pedir permissão, registrar assinatura, receber no PWA (Android e iOS 16.4+)
+- [ ] 🟡 WhatsApp (API oficial) para lembretes
 - [ ] 🟢 Preferências de notificação por usuário
 
 ### 10. Fechamento do MVP
-- [ ] 🔴 Fluxo completo testado ponta a ponta (criar → inscrever → pagar → painel)
+- [ ] 🔴 Fluxo completo ponta a ponta (criar → inscrever → pagar → painel), testado no **desktop e no celular**
+- [ ] 🔴 PWA instalável e utilizável offline no essencial (shell + telas já visitadas)
 - [ ] 🔴 Conformidade LGPD mínima (consentimento, política de privacidade, exclusão de dados)
 - [ ] 🟡 Testes com 3–5 organizadores reais (igreja, escola, família)
-- [ ] 🟡 Página de landing/marketing para captação
-- [ ] 🟢 Onboarding guiado para o primeiro uso
+- [ ] 🟡 Landing de captação · 🟢 Onboarding guiado
 
 ---
 
@@ -131,14 +148,12 @@ item é uma tarefa concreta. Marque `[x]` conforme concluir.
 
 > Para organizadores frequentes. Assinatura e automações.
 
-- [ ] 🔴 Assinaturas e cobrança recorrente (planos Free/Pro)
-- [ ] 🔴 Limites por plano (Free: 1 viagem/limite de participantes)
+- [ ] 🔴 Assinaturas e cobrança recorrente (planos Free/Pro) + limites por plano
 - [ ] 🔴 Viagens ilimitadas no Pro
-- [ ] 🔴 **Check-in via QR Code** no dia da viagem + lista digital
+- [ ] 🔴 📱 **Check-in via QR Code** no dia da viagem: leitura de câmera (BarcodeDetector/Capacitor) + lista digital
 - [ ] 🟡 Relatórios avançados (financeiro, participantes, custos)
 - [ ] 🟡 **Duplicar viagem** (eventos recorrentes)
-- [ ] 🟡 Automações de cobrança e comunicação
-- [ ] 🟡 IA operacional ampliada (cronogramas, previsão de despesas, alertas)
+- [ ] 🟡 Automações de cobrança e comunicação · 🟡 IA operacional ampliada
 - [ ] 🟢 Confirmação de presença e comunicação em tempo real
 - [ ] 🟢 Pós-viagem: avaliações e galeria de fotos
 
@@ -148,23 +163,21 @@ item é uma tarefa concreta. Marque `[x]` conforme concluir.
 
 > Para escolas, igrejas e empresas. Times e governança.
 
-- [ ] 🔴 Organizações/contas com múltiplos usuários (multi-tenant)
-- [ ] 🔴 Papéis e permissões (admin, organizador, financeiro, visualizador)
+- [ ] 🔴 Organizações multi-tenant (`org_id`) + papéis/permissões (Django Groups)
 - [ ] 🟡 Múltiplos administradores por viagem
 - [ ] 🟡 Relatórios avançados e exportação (CSV/PDF)
 - [ ] 🟡 Integrações (contabilidade, calendários, planilhas)
-- [ ] 🟢 Autorização digital e assinatura eletrônica de termos (menores de idade)
+- [ ] 🟢 Autorização digital e assinatura eletrônica (menores de idade)
 - [ ] 🟢 Marca personalizada (white-label leve) por organização
 
 ---
 
 ## 🌐 Fase 4 — Visão de Longo Prazo
 
-- [ ] 🟢 Aplicativo móvel (iOS/Android)
+- [ ] 🟢 **Apps nas lojas** (iOS/Android) empacotando o PWA via **Capacitor** — mesma base de código
 - [ ] 🟢 Intermediação financeira via gateway (split de pagamento)
-- [ ] 🟢 Marketplace de hotéis e de fretamento
-- [ ] 🟢 Fornecedores parceiros e recomendação automática
-- [ ] 🟢 Seguro viagem e emissão de contratos
+- [ ] 🟢 Marketplace de hotéis e de fretamento · fornecedores parceiros
+- [ ] 🟢 Recomendação automática de fornecedores · seguro viagem · contratos
 - [ ] 🟢 IA integrada a APIs reais (hotéis, restaurantes, clima, distâncias)
 - [ ] 🟢 Dashboards inteligentes e previsões financeiras
 
@@ -172,10 +185,11 @@ item é uma tarefa concreta. Marque `[x]` conforme concluir.
 
 ## 🔁 Transversal (durante todo o projeto)
 
-- [ ] 🔴 Segurança: hashing de senhas, rate limiting, validação de entrada, HTTPS
+- [ ] 🔴 Segurança: hashing (nativo Django), rate limiting, validação, HTTPS, CSRF/CORS
+- [ ] 🔴 Tokens no PWA de forma segura (preferir cookie httpOnly a localStorage p/ dados sensíveis)
 - [ ] 🔴 LGPD: base legal, consentimento, minimização e retenção de dados
-- [ ] 🟡 Acessibilidade (WCAG) e responsividade mobile-first
-- [ ] 🟡 Cobertura de testes das regras críticas (cálculo de rateio, pagamentos)
+- [ ] 🟡 Acessibilidade (WCAG) e desempenho no celular (Lighthouse/PWA score)
+- [ ] 🟡 Cobertura de testes das regras críticas (rateio, pagamentos)
 - [ ] 🟡 Backups automáticos do banco e plano de recuperação
 - [ ] 🟢 Internacionalização (i18n) — começar em pt-BR
 - [ ] 🟢 Documentação viva (atualizar `docs/` a cada decisão relevante)
