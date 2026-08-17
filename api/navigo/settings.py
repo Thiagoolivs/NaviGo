@@ -66,6 +66,7 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -154,6 +155,7 @@ REST_AUTH = {
     "JWT_AUTH_REFRESH_COOKIE": "navigo-refresh",
     "JWT_AUTH_HTTPONLY": True,
     "JWT_AUTH_SAMESITE": "Lax",
+    "JWT_AUTH_SECURE": not DEBUG,
     "SESSION_LOGIN": False,
     "REGISTER_SERIALIZER": "apps.accounts.serializers.NaviGoRegisterSerializer",
 }
@@ -204,4 +206,33 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+}
+if not DEBUG:
+    # Em produção, o WhiteNoise serve os estáticos (comprimidos).
+    STORAGES["staticfiles"]["BACKEND"] = "whitenoise.storage.CompressedStaticFilesStorage"
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# --- Produção / deploy (ex.: Railway) ---------------------------------------
+# O Railway injeta RAILWAY_PUBLIC_DOMAIN — libera host e CSRF automaticamente.
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
+_railway_domain = env("RAILWAY_PUBLIC_DOMAIN", default="")
+if _railway_domain:
+    ALLOWED_HOSTS = [*ALLOWED_HOSTS, _railway_domain]
+    CSRF_TRUSTED_ORIGINS = [*CSRF_TRUSTED_ORIGINS, f"https://{_railway_domain}"]
+
+# Atrás do proxy do Railway, detecta HTTPS pelo cabeçalho encaminhado.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# Endurecimento em produção (não afeta dev/testes).
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    # O edge do Railway já força HTTPS; ative o redirect só se quiser (env).
+    SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=False)
+    SECURE_HSTS_SECONDS = env.int("SECURE_HSTS_SECONDS", default=0)
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = SECURE_HSTS_SECONDS > 0
+    SECURE_HSTS_PRELOAD = SECURE_HSTS_SECONDS > 0
