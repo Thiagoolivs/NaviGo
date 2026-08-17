@@ -69,11 +69,11 @@ item é uma tarefa concreta. Marque `[x]` conforme concluir.
 > **PWA** desde o início (web + instalável no celular).
 
 ### 1. Autenticação e conta
-- [ ] 🔴 🖥️ Endpoints de cadastro/login (dj-rest-auth + django-allauth; JWT ou sessão)
-- [ ] 🔴 📱 Telas de cadastro, login e recuperação de senha
-- [ ] 🔴 Login social (Google) — reduz atrito
+- [x] 🔴 🖥️ Endpoints de cadastro/login (dj-rest-auth + django-allauth; JWT em cookie httpOnly)
+- [x] 🔴 📱 Telas de login e cadastro *(recuperação de senha: endpoint pronto, tela pendente)*
+- [ ] 🔴 Login social (Google) — *backend e caminho prontos; falta credenciais + botão funcional*
 - [ ] 🟡 Perfil do organizador (nome, telefone, foto, dados PIX)
-- [ ] 🟡 Verificação de e-mail
+- [x] 🟡 Verificação de e-mail *(configurada como `optional` em dev)*
 
 ### 2. Criar viagem
 - [ ] 🔴 🖥️ API de viagem: nome, destino, datas, duração, nº de participantes, tipo
@@ -130,7 +130,7 @@ item é uma tarefa concreta. Marque `[x]` conforme concluir.
 - [ ] 🟢 Indicadores/gráficos financeiros básicos
 
 ### 9. Notificações
-- [ ] 🔴 🖥️ E-mail transacional (Resend/SES) via Celery
+- [ ] 🔴 🖥️ E-mail transacional (Resend/SES) via Celery *(caminho pronto: `EMAIL_BACKEND` console/Resend)*
 - [ ] 🟡 📱 **Web Push** (VAPID): pedir permissão, registrar assinatura, receber no PWA (Android e iOS 16.4+)
 - [ ] 🟡 WhatsApp (API oficial) para lembretes
 - [ ] 🟢 Preferências de notificação por usuário

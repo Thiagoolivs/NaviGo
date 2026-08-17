@@ -1,0 +1,29 @@
+# Serviços de infraestrutura para desenvolvimento (PostgreSQL + Redis).
+# A API (Django) e o PWA (Vite) rodam localmente; ver api/README.md e web/README.md.
+#
+#   docker compose up -d
+#
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: navigo
+      POSTGRES_USER: navigo
+      POSTGRES_PASSWORD: navigo
+    ports:
+      - "5432:5432"
+    volumes:
+      - navigo_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U navigo"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+volumes:
+  navigo_pgdata:
