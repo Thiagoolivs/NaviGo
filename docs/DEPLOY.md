@@ -1,9 +1,10 @@
 # 🚀 Deploy — NaviGo
 
-Guia para publicar o NaviGo para **testes**. Arquitetura de deploy:
+Guia para publicar o NaviGo para **testes**.
 
-- **API (Django)** → **Railway** (via Docker) + **PostgreSQL** (plugin)
-- **PWA (Ionic/Vite)** → **Vercel** ou **Netlify** (estático), apontando para a API
+**Um serviço só no Railway**: a imagem Docker da raiz compila a interface (PWA)
+e o Django a serve junto com a API, no mesmo domínio. Banco pelo plugin
+**PostgreSQL**.
 
 > Estado: pronto para um deploy de teste. PSP e IA seguem em `dummy`; e-mails
 > saem no log até configurar o Resend.
