@@ -10,14 +10,16 @@ Guia para publicar o NaviGo para **testes**. Arquitetura de deploy:
 
 ---
 
-## 1. API no Railway
+## 1. Tudo em um serviço no Railway
+
+A imagem Docker da **raiz do repositório** compila a interface (PWA) e a serve
+junto com a API — **um deploy, um domínio**. Sem CORS e sem cookie entre
+origens.
 
 1. **New Project → Deploy from GitHub repo** e selecione o repositório.
-2. No serviço, defina **Root Directory = `api`**.
-   ⚠️ **Este passo é obrigatório.** Sem ele o Railway tenta detectar o projeto na
-   raiz do repositório (que é um monorepo) e o build falha antes de começar.
-   Com o Root Directory correto, ele usa o `api/Dockerfile` (declarado também em
-   `api/railway.json`).
+2. Em **Settings → Root Directory**, deixe **vazio** (a raiz do repositório).
+   ⚠️ Se você já tinha um serviço com Root Directory = `api`, **limpe esse
+   campo** — senão o Railway continua publicando só a API, sem a interface.
 3. Adicione o plugin **PostgreSQL** (injeta `DATABASE_URL` automaticamente).
 4. Em **Variables**, defina:
 
@@ -26,7 +28,6 @@ Guia para publicar o NaviGo para **testes**. Arquitetura de deploy:
    | `DJANGO_SECRET_KEY` | uma chave secreta (veja abaixo) |
    | `DJANGO_DEBUG` | `false` |
    | `CELERY_TASK_ALWAYS_EAGER` | `true` *(evita precisar de Redis nos primeiros testes)* |
-   | `CORS_ALLOWED_ORIGINS` | `https://SEU-PWA.vercel.app` |
    | `ACCOUNT_EMAIL_VERIFICATION` | `optional` |
 
    Gere a `DJANGO_SECRET_KEY` com:
@@ -34,31 +35,37 @@ Guia para publicar o NaviGo para **testes**. Arquitetura de deploy:
    python -c "import secrets; print(secrets.token_urlsafe(50))"
    ```
 
-5. **Settings → Networking → Generate Domain** (o Railway define `RAILWAY_PUBLIC_DOMAIN`, que o projeto libera sozinho em `ALLOWED_HOSTS`/`CSRF_TRUSTED_ORIGINS`).
-6. Deploy. O container aplica as migrações e sobe o gunicorn.
+5. **Settings → Networking → Generate Domain**.
+6. Deploy. O build compila o PWA, instala a API, aplica as migrações e sobe o
+   gunicorn.
 
-**Testes rápidos:**
-- Raiz: `https://SEU-API.up.railway.app/` → JSON com os endpoints disponíveis
-- Saúde: `https://SEU-API.up.railway.app/api/v1/health/` → `{"status":"ok",...}`
+**O que fica disponível no domínio:**
 
-> ℹ️ Este serviço é **só a API**. Abrir o domínio no navegador mostra o JSON
-> acima — a interface é o PWA, publicado separadamente (passo 2).
-- Admin: crie um superusuário no shell do serviço:
-  ```bash
-  uv run python manage.py createsuperuser
-  ```
+| Endereço | O que é |
+|----------|---------|
+| `/` | **A interface** (painel do organizador) |
+| `/trip/<slug>` | Página pública da viagem (link/QR do convite) |
+| `/api/v1/health/` | Saúde da API |
+| `/admin/` | Admin do Django |
+
+Crie o superusuário no shell do serviço:
+```bash
+python manage.py createsuperuser
+```
 
 ---
 
-## 2. PWA no Vercel/Netlify
+## 2. Publicar interface e API separadamente (opcional)
 
-1. Novo projeto a partir do repositório, **Root Directory = `web`**.
-2. Build: `npm run build` · Output: `dist`.
-3. Variável de ambiente: `VITE_API_URL = https://SEU-API.up.railway.app/api/v1`.
-4. Deploy. Depois, ajuste `CORS_ALLOWED_ORIGINS` na API para a URL do PWA.
+Se um dia quiser separar (por exemplo, colocar a interface numa CDN):
 
-> Também é possível hospedar o PWA no Railway (serviço estático), mas Vercel/
-> Netlify são mais simples para conteúdo estático.
+- **API:** um serviço com Root Directory = `api` e um Dockerfile próprio.
+- **PWA:** Vercel/Netlify com Root Directory = `web`, build `npm run build`,
+  saída `dist` e `VITE_API_URL=https://SUA-API/api/v1`.
+- Nesse caso é obrigatório apontar `CORS_ALLOWED_ORIGINS` e
+  `CSRF_TRUSTED_ORIGINS` na API para a URL da interface.
+
+Para o MVP, o serviço único do passo 1 é mais simples.
 
 ---
 
@@ -83,11 +90,11 @@ Guia para publicar o NaviGo para **testes**. Arquitetura de deploy:
 
 | Sintoma no log | Causa provável | O que fazer |
 |----------------|----------------|-------------|
-| `Nixpacks was unable to generate a build plan` / build nem inicia | **Root Directory** não está como `api` | Ajuste em Settings → Root Directory |
-| `no such file or directory: requirements.txt` | Build rodando a partir da raiz do repo | Mesma correção acima |
-| `ModuleNotFoundError` ao subir | Dependência nova sem regenerar o `requirements.txt` | Rode `uv export --no-dev --format requirements-txt --no-emit-project -o requirements.txt` e commite |
+| `Nixpacks was unable to generate a build plan` / build nem inicia | Root Directory apontando para uma subpasta | Deixe o **Root Directory vazio** (a raiz tem o `Dockerfile`) |
+| Abre o domínio e aparece **JSON** em vez da interface | O serviço está publicando só a API (Root Directory = `api`) | Limpe o Root Directory e refaça o deploy |
+| `ModuleNotFoundError` ao subir | Dependência nova sem regenerar o `requirements.txt` | Rode `uv export --no-dev --format requirements-txt --no-emit-project -o requirements.txt` e commite (há um teste que barra isso) |
 | `Bad Request (400)` em toda requisição | `DisallowedHost` — o domínio não está em `ALLOWED_HOSTS` | Já corrigido: os domínios `*.railway.app` e `*.up.railway.app` são sempre aceitos. Para domínio próprio, adicione-o em `DJANGO_ALLOWED_HOSTS` |
-| `404` ao abrir o domínio | Rota inexistente | Já corrigido: a raiz `/` agora lista os endpoints. Lembre que a interface é o PWA, publicado à parte |
+| `404` ao recarregar uma página interna (ex.: `/login`) | Interface não copiada para a imagem | Confirme que o build usou o `Dockerfile` da raiz |
 | `CSRF verification failed` no PWA | Origem do front não confiável | Adicione a URL do PWA em `CSRF_TRUSTED_ORIGINS` e em `CORS_ALLOWED_ORIGINS` |
 | Erro de conexão com o banco | Plugin PostgreSQL ausente | Adicione o plugin (ele injeta `DATABASE_URL`) |
 | Falha em `collectstatic` no build | Variável faltando | O build já passa `DJANGO_SECRET_KEY=build-only`; verifique alterações no `settings.py` |
@@ -100,7 +107,7 @@ Guia para publicar o NaviGo para **testes**. Arquitetura de deploy:
 ## 5. Checklist de produção (além do teste)
 
 - [ ] `DJANGO_DEBUG=false` e `DJANGO_SECRET_KEY` forte
-- [ ] `CORS_ALLOWED_ORIGINS` apenas com a origem do PWA
+- [ ] `CORS_ALLOWED_ORIGINS` só é necessário se a interface for publicada à parte
 - [ ] E-mail real (Resend) e `ACCOUNT_EMAIL_VERIFICATION=mandatory`
 - [ ] PSP de PIX e provedor de IA definidos (sair do `dummy`)
 - [ ] Backups do PostgreSQL

@@ -220,6 +220,16 @@ STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
 }
+
+# --- Interface (PWA) servida pelo mesmo serviço -----------------------------
+# A imagem Docker compila o PWA e o copia para `spa/`. Quando essa pasta
+# existe, o WhiteNoise a serve na raiz do domínio: interface e API no mesmo
+# endereço, sem CORS e sem cookie entre origens.
+SPA_ROOT = BASE_DIR / "spa"
+SERVE_SPA = SPA_ROOT.is_dir()
+if SERVE_SPA:
+    WHITENOISE_ROOT = SPA_ROOT
+    WHITENOISE_INDEX_FILE = True
 if not DEBUG:
     # Em produção, o WhiteNoise serve os estáticos (comprimidos).
     STORAGES["staticfiles"]["BACKEND"] = "whitenoise.storage.CompressedStaticFilesStorage"
