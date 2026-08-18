@@ -40,8 +40,7 @@ futuro — sem reescrever a base.
 | E-mail | **Resend** | Postmark, SES | Transacional |
 | WhatsApp | **API oficial** (Cloud API) | Twilio | Notificação onde o público está |
 | Storage | **S3-compatível** (S3 / Cloudflare R2) | Supabase Storage | Fotos, documentos, comprovantes |
-| Deploy API | **Railway / Render / Fly.io** (Gunicorn + Uvicorn) | — | Simples para Python |
-| Deploy PWA | **Vercel / Netlify / CDN** (build estático) | — | Distribuição global rápida |
+| Deploy | **Railway** — imagem única (PWA + API no mesmo domínio) | Serviços separados (API no Railway, PWA em CDN) | Um deploy só; sem CORS nem cookie entre origens |
 | Observabilidade | **Sentry** (front+back) + analytics | — | Erros e uso |
 
 > **Backend Django vs. FastAPI:** o **Django** rende MVP mais rápido pelo painel
@@ -163,9 +162,8 @@ O que torna o NaviGo um "app" no celular sendo um web app:
 
 | Ambiente | API | PWA |
 |----------|-----|-----|
-| **Local** | Django + Postgres + Redis (docker-compose); PSP/IA em sandbox | Vite dev server |
-| **Preview** | Deploy por PR | Build de preview por PR |
-| **Produção** | Gunicorn + Uvicorn (Railway/Render/Fly) | Build estático em CDN (Vercel/Netlify) |
+| **Local** | Django + Postgres + Redis (docker-compose); PSP/IA em sandbox | Vite dev server (porta 5173) |
+| **Produção** | Um serviço no Railway: o Dockerfile da raiz compila o PWA e o Django o serve junto com a API, no mesmo domínio | — |
 
 ---
 

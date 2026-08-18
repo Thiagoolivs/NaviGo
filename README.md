@@ -57,8 +57,7 @@ isso em um só lugar.**
 
 ## Documentação
 
-Este repositório está em **fase de concepção**. A base do projeto está
-documentada aqui:
+A documentação do projeto:
 
 | Documento | Conteúdo |
 |-----------|----------|
@@ -85,16 +84,16 @@ documentada aqui:
 - **Pagamentos PIX:** PSP brasileiro (Mercado Pago / Asaas / Pagar.me)
 - **IA:** SDK de LLM (Anthropic Claude / OpenAI)
 - **Notificações:** E-mail (Resend) + WhatsApp + Web Push
-- **Deploy:** API (Railway / Render / Fly) + PWA estático (Vercel / Netlify / CDN)
+- **Deploy:** Railway — **um serviço** servindo interface e API no mesmo domínio
 
 ---
 
 ## Status do projeto
 
-🟢 **Fase 0 — Fundação em andamento.** O monorepo já tem o esqueleto do backend
-(Django + DRF) e do frontend (PWA Ionic + React), com PSP de PIX e provedor de
-IA atrás de interfaces (stubs). Próximo: **Fase 1 (MVP)** do
-[`CHECKLIST.md`](./CHECKLIST.md).
+🟢 **Fase 1 (MVP) em andamento.** Já funciona de ponta a ponta: criar viagem com
+o assistente de IA, orçamento com rateio, publicar o link, **inscrição do
+participante** e o **painel de gestão** (pagamentos, parcelas e documentos).
+Faltam notificações e a baixa automática do PIX — ver [`CHECKLIST.md`](./CHECKLIST.md).
 
 ## Estrutura do monorepo
 
@@ -103,9 +102,14 @@ NaviGo/
 ├── api/                # Backend Python (Django + DRF)
 ├── web/                # Frontend PWA (Ionic + React + Vite)
 ├── docs/               # Documentação do projeto
+├── Dockerfile          # imagem única: compila o PWA e serve junto com a API
 ├── docker-compose.yml  # PostgreSQL + Redis (dev)
 └── CHECKLIST.md        # Checklist de desenvolvimento
 ```
+
+Em produção, **interface e API rodam no mesmo serviço e no mesmo domínio**
+(o Django serve o PWA compilado) — ver [`docs/DEPLOY.md`](./docs/DEPLOY.md).
+Em desenvolvimento, os dois rodam separados para ter recarga automática.
 
 ## Como rodar (desenvolvimento)
 

@@ -1,0 +1,17 @@
+**/node_modules
+**/.venv
+**/__pycache__
+**/*.pyc
+**/dist
+**/staticfiles
+**/spa
+**/db.sqlite3
+**/.env
+**/.env.*
+!**/.env.example
+.git
+**/.pytest_cache
+**/.ruff_cache
+**/.mypy_cache
+**/playwright-report
+**/test-results

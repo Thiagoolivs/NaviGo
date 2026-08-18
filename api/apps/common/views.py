@@ -1,4 +1,5 @@
-from django.http import HttpRequest, JsonResponse
+from django.conf import settings
+from django.http import FileResponse, Http404, HttpRequest, JsonResponse
 
 
 def health(_request: HttpRequest) -> JsonResponse:
@@ -23,3 +24,16 @@ def index(_request: HttpRequest) -> JsonResponse:
             },
         }
     )
+
+
+def spa(_request: HttpRequest, path: str = "") -> FileResponse:
+    """Entrega o index.html da interface.
+
+    O PWA faz o roteamento no navegador, então qualquer caminho que não seja da
+    API precisa devolver o index — senão recarregar a página em `/login` daria
+    404 vindo do servidor.
+    """
+    index = settings.SPA_ROOT / "index.html"
+    if not index.is_file():
+        raise Http404("Interface não encontrada.")
+    return FileResponse(index.open("rb"), content_type="text/html")

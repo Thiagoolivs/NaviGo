@@ -15,6 +15,9 @@ Thumbs.db
 !.vscode/extensions.json
 .idea/
 
+# Interface compilada, copiada para dentro da API na imagem Docker
+/api/spa/
+
 # ===== Backend / Python (api/) =====
 __pycache__/
 *.py[cod]
