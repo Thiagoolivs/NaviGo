@@ -227,8 +227,23 @@ if not DEBUG:
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # --- Produção / deploy (ex.: Railway) ---------------------------------------
-# O Railway injeta RAILWAY_PUBLIC_DOMAIN — libera host e CSRF automaticamente.
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
+
+# Domínios do Railway. O ponto inicial é o curinga de subdomínio do Django, o
+# que cobre qualquer domínio *.up.railway.app.
+#
+# Estes são SEMPRE acrescentados (não substituem DJANGO_ALLOWED_HOSTS): o
+# RAILWAY_PUBLIC_DOMAIN nem sempre chega à aplicação, e sem isso toda
+# requisição vira 400 (DisallowedHost).
+RAILWAY_HOSTS = [".railway.app", ".up.railway.app"]
+ALLOWED_HOSTS = [*ALLOWED_HOSTS, *RAILWAY_HOSTS]
+CSRF_TRUSTED_ORIGINS = [
+    *CSRF_TRUSTED_ORIGINS,
+    "https://*.railway.app",
+    "https://*.up.railway.app",
+]
+
+# Quando o Railway informa o domínio, ele entra explicitamente também.
 _railway_domain = env("RAILWAY_PUBLIC_DOMAIN", default="")
 if _railway_domain:
     ALLOWED_HOSTS = [*ALLOWED_HOSTS, _railway_domain]

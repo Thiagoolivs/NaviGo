@@ -38,7 +38,11 @@ Guia para publicar o NaviGo para **testes**. Arquitetura de deploy:
 6. Deploy. O container aplica as migrações e sobe o gunicorn.
 
 **Testes rápidos:**
+- Raiz: `https://SEU-API.up.railway.app/` → JSON com os endpoints disponíveis
 - Saúde: `https://SEU-API.up.railway.app/api/v1/health/` → `{"status":"ok",...}`
+
+> ℹ️ Este serviço é **só a API**. Abrir o domínio no navegador mostra o JSON
+> acima — a interface é o PWA, publicado separadamente (passo 2).
 - Admin: crie um superusuário no shell do serviço:
   ```bash
   uv run python manage.py createsuperuser
@@ -82,7 +86,8 @@ Guia para publicar o NaviGo para **testes**. Arquitetura de deploy:
 | `Nixpacks was unable to generate a build plan` / build nem inicia | **Root Directory** não está como `api` | Ajuste em Settings → Root Directory |
 | `no such file or directory: requirements.txt` | Build rodando a partir da raiz do repo | Mesma correção acima |
 | `ModuleNotFoundError` ao subir | Dependência nova sem regenerar o `requirements.txt` | Rode `uv export --no-dev --format requirements-txt --no-emit-project -o requirements.txt` e commite |
-| `DisallowedHost` / `Bad Request (400)` | Domínio não liberado | Gere o domínio no Railway (ele injeta `RAILWAY_PUBLIC_DOMAIN`, já tratado) ou defina `DJANGO_ALLOWED_HOSTS` |
+| `Bad Request (400)` em toda requisição | `DisallowedHost` — o domínio não está em `ALLOWED_HOSTS` | Já corrigido: os domínios `*.railway.app` e `*.up.railway.app` são sempre aceitos. Para domínio próprio, adicione-o em `DJANGO_ALLOWED_HOSTS` |
+| `404` ao abrir o domínio | Rota inexistente | Já corrigido: a raiz `/` agora lista os endpoints. Lembre que a interface é o PWA, publicado à parte |
 | `CSRF verification failed` no PWA | Origem do front não confiável | Adicione a URL do PWA em `CSRF_TRUSTED_ORIGINS` e em `CORS_ALLOWED_ORIGINS` |
 | Erro de conexão com o banco | Plugin PostgreSQL ausente | Adicione o plugin (ele injeta `DATABASE_URL`) |
 | Falha em `collectstatic` no build | Variável faltando | O build já passa `DJANGO_SECRET_KEY=build-only`; verifique alterações no `settings.py` |
