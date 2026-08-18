@@ -851,6 +851,7 @@ dependencies = [
     { name = "gunicorn" },
     { name = "psycopg", extra = ["binary"] },
     { name = "redis" },
+    { name = "requests" },
     { name = "uvicorn" },
     { name = "whitenoise" },
 ]
@@ -881,6 +882,7 @@ requires-dist = [
     { name = "gunicorn", specifier = ">=22.0" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
     { name = "redis", specifier = ">=5.0" },
+    { name = "requests", specifier = ">=2.32" },
     { name = "uvicorn", specifier = ">=0.30" },
     { name = "whitenoise", specifier = ">=6.7" },
 ]

@@ -22,39 +22,39 @@ item é uma tarefa concreta. Marque `[x]` conforme concluir.
 ## 🧱 Fase 0 — Fundação do Projeto
 
 ### Decisões e alinhamento
-- [ ] 🔴 Validar/ajustar a stack em [`docs/ARQUITETURA.md`](./docs/ARQUITETURA.md)
-- [ ] 🔴 Escolher o PSP de PIX (Mercado Pago, Asaas ou Pagar.me) e criar conta sandbox
-- [ ] 🔴 Escolher o provedor de IA (Claude/OpenAI) e obter chave de API
+- [x] 🔴 Validar/ajustar a stack em [`docs/ARQUITETURA.md`](./docs/ARQUITETURA.md)
+- [x] 🔴 Escolher o PSP de PIX → **Asaas** *(falta criar a conta sandbox e a chave)*
+- [x] 🔴 Escolher o provedor de IA → **Gemini** *(falta a chave de API)*
 - [ ] 🟡 Definir domínio e identidade visual básica (logo, cores, tipografia)
 - [ ] 🟡 Escolher a licença do projeto
 
 ### Monorepo e ferramentas
-- [ ] 🔴 Criar a estrutura de monorepo: `api/` (Python) + `web/` (PWA) + `docs/`
-- [ ] 🔴 `docker-compose.yml` com PostgreSQL + Redis para desenvolvimento
-- [ ] 🔴 Adicionar `.gitignore` (Python + Node), `.env.example` e READMEs por pasta
+- [x] 🔴 Criar a estrutura de monorepo: `api/` (Python) + `web/` (PWA) + `docs/`
+- [x] 🔴 `docker-compose.yml` com PostgreSQL + Redis para desenvolvimento
+- [x] 🔴 Adicionar `.gitignore` (Python + Node), `.env.example` e READMEs por pasta
 - [ ] 🟡 Convenção de commits (Conventional Commits) + template de PR
 - [ ] 🟡 CI (GitHub Actions): lint, typecheck e testes de `api/` e `web/`
 
 ### 🖥️ Backend/API (Django + DRF)
-- [ ] 🔴 `startproject` + apps (`accounts`, `trips`, `participants`, `payments`, `notifications`, `ai`)
-- [ ] 🔴 Dependências com **uv** (ou Poetry) + `pyproject.toml`
-- [ ] 🔴 **Ruff** (lint+format) + **mypy** + **pre-commit**
-- [ ] 🔴 Traduzir o [modelo de dados](./docs/MODELO-DE-DADOS.md) em **Django models** + `migrate`
-- [ ] 🔴 Configurar **DRF** + versionamento de API (`/api/v1`) + **CORS** para o PWA
+- [x] 🔴 `startproject` + apps (`accounts`, `trips`, `participants`, `payments`, `notifications`, `ai`)
+- [x] 🔴 Dependências com **uv** + `pyproject.toml`
+- [x] 🔴 **Ruff** (lint+format) + **mypy** configurados *(pre-commit pendente)*
+- [x] 🔴 Traduzir o [modelo de dados](./docs/MODELO-DE-DADOS.md) em **Django models** + `migrate`
+- [x] 🔴 Configurar **DRF** + versionamento de API (`/api/v1`) + **CORS** para o PWA
 - [ ] 🔴 Seed inicial (management command/fixtures)
-- [ ] 🟡 **Celery + Redis** para tarefas assíncronas
-- [ ] 🟡 **pytest** + `pytest-django` + `factory_boy`
-- [ ] 🟢 Deploy da API (Railway/Render/Fly) com Gunicorn + workers Uvicorn
+- [x] 🟡 **Celery + Redis** configurados *(sem tarefas ainda)*
+- [x] 🟡 **pytest** + `pytest-django` *(factory_boy disponível, ainda não usado)*
+- [x] 🟢 Deploy da API preparado (Dockerfile + Gunicorn + WhiteNoise, `railway.json`)
 
 ### 📱 Frontend/PWA (Ionic + React + Vite)
-- [ ] 🔴 Inicializar app **Ionic React + TypeScript** (Vite)
-- [ ] 🔴 Configurar **ESLint + Prettier** + checagem de tipos
-- [ ] 🔴 Cliente da API (fetch/axios + React Query) e gestão de sessão/token
-- [ ] 🔴 **PWA**: `manifest.webmanifest` + ícones + **service worker** (`vite-plugin-pwa`/Workbox)
+- [x] 🔴 Inicializar app **Ionic React + TypeScript** (Vite)
+- [x] 🔴 Lint (oxlint) + checagem de tipos (`tsc`) no build
+- [x] 🔴 Cliente da API (fetch + cookie JWT + CSRF) e gestão de sessão
+- [x] 🔴 **PWA**: `manifest.webmanifest` + **service worker** (vite-plugin-pwa) *(faltam os PNGs dos ícones)*
 - [ ] 🔴 Instalação no celular ("adicionar à tela inicial") + tela cheia testadas
-- [ ] 🟡 Layout **mobile-first** e responsivo (funciona bem em desktop e celular)
+- [x] 🟡 Layout **mobile-first** e responsivo (componentes Ionic)
 - [ ] 🟡 Estado offline básico (shell em cache + mensagem de "sem conexão")
-- [ ] 🟢 `capacitor.config.ts` preparado (empacotamento nativo futuro, sem reescrita)
+- [x] 🟢 `capacitor.config.ts` preparado (empacotamento nativo futuro, sem reescrita)
 - [ ] 🟢 Vitest + Testing Library
 
 ### Qualidade e observabilidade (base)
@@ -76,31 +76,31 @@ item é uma tarefa concreta. Marque `[x]` conforme concluir.
 - [x] 🟡 Verificação de e-mail *(configurada como `optional` em dev)*
 
 ### 2. Criar viagem
-- [ ] 🔴 🖥️ API de viagem: nome, destino, datas, duração, nº de participantes, tipo
-- [ ] 🔴 📱 Fluxo de criação (formulário guiado, mobile-first)
-- [ ] 🔴 Tipos pré-definidos (igreja, escola, família, amigos, corporativa, evento)
+- [x] 🔴 🖥️ API de viagem: nome, destino, datas, duração, nº de participantes, tipo
+- [x] 🔴 📱 Fluxo de criação (assistente em 3 etapas, mobile-first)
+- [x] 🔴 Tipos pré-definidos (igreja, escola, família, amigos, corporativa, evento)
 - [ ] 🟡 Upload de imagem de capa (Pillow + storage)
 - [ ] 🟢 Rascunho vs. publicada (status da viagem)
 
 ### 3. Assistente Inteligente (IA)
-- [ ] 🔴 🖥️ Serviço de IA (SDK anthropic/openai) que monta a estrutura da viagem
-- [ ] 🔴 📱 Fluxo de perguntas guiadas (hospedagem? alimentação? transporte? quartos? grupos? vagas?)
-- [ ] 🔴 Gerar **checklist automático** de tarefas por tipo de viagem
+- [x] 🔴 🖥️ Serviço de IA (**Gemini**) que monta a estrutura da viagem
+- [x] 🔴 📱 Fluxo de perguntas guiadas (hospedagem? alimentação? transporte? quartos? grupos? vagas?)
+- [x] 🔴 Gerar **checklist automático** de tarefas por tipo de viagem
 - [ ] 🟡 Sugerir itens de orçamento a partir das respostas
-- [ ] 🟡 Guardrails: validar saída, limitar custo/tokens, fallback em falha
+- [x] 🟡 Guardrails: saída estruturada (JSON schema), categorias validadas, fallback em falha (503)
 - [ ] 🟢 Sugerir cronograma/roteiro inicial
 
 ### 4. Orçamento e precificação
-- [ ] 🔴 🖥️ Cadastro de custos por categoria (transporte, hospedagem, alimentação, ingressos, extras)
-- [ ] 🔴 🖥️ **Cálculo do valor por participante** em camada de serviço pura (testável com pytest)
-- [ ] 🔴 Margem de segurança + custo total
-- [ ] 🔴 📱 Tela de orçamento com valor por pessoa em tempo real
-- [ ] 🟡 Custos fixos (rateados) vs. por pessoa
+- [x] 🔴 🖥️ Cadastro de custos por categoria (transporte, hospedagem, alimentação, ingressos, extras)
+- [x] 🔴 🖥️ **Cálculo do valor por participante** em camada de serviço pura (testável com pytest)
+- [x] 🔴 Margem de segurança + custo total
+- [x] 🔴 📱 Tela de orçamento com valor por pessoa em tempo real
+- [x] 🟡 Custos fixos (rateados) vs. por pessoa
 - [ ] 🟢 Simulação de cenários (variação por nº de participantes)
 
 ### 5. Página pública e convites
-- [ ] 🔴 🖥️ Endpoint público da viagem por `slug` + geração de convite
-- [ ] 🔴 📱 Página pública (informações + inscrição), renderizável e compartilhável
+- [x] 🔴 🖥️ Endpoint público da viagem por `slug` *(geração de convite/QR pendente)*
+- [x] 🔴 📱 Página pública com as informações da viagem *(inscrição pendente)*
 - [ ] 🔴 Geração de **QR Code** do convite (lib no back ou front)
 - [ ] 🔴 Formulário de inscrição do participante (dados + termos)
 - [ ] 🟡 Controle de limite de vagas (fecha ao lotar)
@@ -114,7 +114,7 @@ item é uma tarefa concreta. Marque `[x]` conforme concluir.
 - [ ] 🟢 Divisão em quartos/grupos
 
 ### 7. Pagamentos via PIX
-- [ ] 🔴 🖥️ Integração com o PSP (sandbox → produção) atrás de uma interface própria
+- [x] 🔴 🖥️ Integração com o PSP (**Asaas**) atrás de interface própria — *falta validar no sandbox*
 - [ ] 🔴 🖥️ Geração de **QR Code PIX** por parcela
 - [ ] 🔴 🖥️ **Webhook** validado por assinatura e **idempotente** → baixa automática
 - [ ] 🔴 🖥️ Controle de parcelas (valor, vencimento, status)

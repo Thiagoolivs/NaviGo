@@ -4,8 +4,10 @@ import { Redirect, Route } from 'react-router-dom'
 
 import Dashboard from './pages/Dashboard'
 import Login from './pages/Login'
+import NewTrip from './pages/NewTrip'
 import PublicTrip from './pages/PublicTrip'
 import Register from './pages/Register'
+import TripDetail from './pages/TripDetail'
 
 setupIonicReact()
 
@@ -14,8 +16,10 @@ export default function App() {
     <IonApp>
       <IonReactRouter>
         <IonRouterOutlet>
-          {/* Painel do organizador (autenticado, no futuro) */}
+          {/* Área do organizador (autenticada) */}
           <Route exact path="/" component={Dashboard} />
+          <Route exact path="/trips/new" component={NewTrip} />
+          <Route exact path="/trips/:id" component={TripDetail} />
           {/* Autenticação */}
           <Route exact path="/login" component={Login} />
           <Route exact path="/register" component={Register} />

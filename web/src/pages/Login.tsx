@@ -15,7 +15,7 @@ import {
 import { type FormEvent, useState } from 'react'
 import { Link } from 'react-router-dom'
 
-import { AuthError, login } from '../lib/api/auth'
+import { ApiError, login } from '../lib/api/auth'
 
 export default function Login() {
   const router = useIonRouter()
@@ -32,7 +32,7 @@ export default function Login() {
       await login(email, password)
       router.push('/', 'root', 'replace')
     } catch (err) {
-      setError(err instanceof AuthError ? 'Credenciais inválidas.' : 'Erro ao entrar.')
+      setError(err instanceof ApiError ? 'Credenciais inválidas.' : 'Erro ao entrar.')
     } finally {
       setLoading(false)
     }

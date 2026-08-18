@@ -14,6 +14,7 @@ dependencies = [
     "gunicorn>=22.0",
     "uvicorn>=0.30",
     "whitenoise>=6.7",  # serve arquivos estáticos em produção
+    "requests>=2.32",  # integrações HTTP (Asaas, Gemini)
     # Autenticação: allauth + dj-rest-auth (JWT), Google login
     "django-allauth>=65.3",
     "dj-rest-auth>=7.0",

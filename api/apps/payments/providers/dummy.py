@@ -1,20 +1,27 @@
-"""Stub de PSP para desenvolvimento, enquanto o provedor real não é escolhido.
+"""Stub de PSP para desenvolvimento e testes.
 
 Gera cobranças falsas e aceita qualquer webhook. NÃO usar em produção.
 """
 
 from __future__ import annotations
 
+import datetime as dt
 import json
 import uuid
 from decimal import Decimal
 
-from .base import PaymentEvent, PaymentProvider, PixCharge
+from .base import Payer, PaymentEvent, PaymentProvider, PixCharge
 
 
 class DummyPaymentProvider(PaymentProvider):
     def create_pix_charge(
-        self, *, amount: Decimal, description: str, reference: str
+        self,
+        *,
+        amount: Decimal,
+        description: str,
+        reference: str,
+        payer: Payer | None = None,
+        due_date: dt.date | None = None,
     ) -> PixCharge:
         txid = uuid.uuid4().hex
         payload = f"PIX-DUMMY|{reference}|{amount}|{description}"

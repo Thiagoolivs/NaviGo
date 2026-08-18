@@ -4,15 +4,26 @@ from __future__ import annotations
 
 from django.conf import settings
 
-from .base import PaymentEvent, PaymentProvider, PixCharge
+from .asaas import AsaasError, AsaasPaymentProvider
+from .base import Payer, PaymentEvent, PaymentProvider, PixCharge
 from .dummy import DummyPaymentProvider
 
-__all__ = ["PaymentEvent", "PaymentProvider", "PixCharge", "get_payment_provider"]
+__all__ = [
+    "AsaasError",
+    "AsaasPaymentProvider",
+    "DummyPaymentProvider",
+    "PaymentEvent",
+    "PaymentProvider",
+    "Payer",
+    "PixCharge",
+    "get_payment_provider",
+]
 
 
 def get_payment_provider() -> PaymentProvider:
     provider = getattr(settings, "PAYMENT_PROVIDER", "dummy")
     if provider == "dummy":
         return DummyPaymentProvider()
-    # TODO: implementar mercadopago / asaas / pagarme quando o PSP for escolhido.
-    raise NotImplementedError(f"PSP '{provider}' ainda não implementado.")
+    if provider == "asaas":
+        return AsaasPaymentProvider()
+    raise NotImplementedError(f"PSP '{provider}' não suportado.")
