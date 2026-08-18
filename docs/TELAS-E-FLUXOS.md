@@ -115,7 +115,7 @@ flowchart LR
 | **Login** | 🟢 | E-mail + senha, "Entrar com Google", link p/ cadastro e recuperação |
 | **Cadastro** | 🟢 | E-mail + senha (username gerado); já autentica ao concluir |
 | **Recuperar senha** | 🟢 | Pede e-mail → envia link (endpoint pronto) |
-| **Perfil** | 🟡 | Nome, telefone, foto, **chave PIX** do organizador |
+| **Minha conta PIX** | 🟢 | Favorecido, instituição, chave e **QR Code** (colar o copia e cola — geramos o QR — ou enviar a imagem) |
 
 ### 4.2 Organizador
 | Tela | Fase | Conteúdo |
@@ -173,7 +173,8 @@ busca, mostrando de uma vez **pagamento** e **documentos entregues**.
 | `/trips/:id` | Detalhe: checklist + orçamento | ✅ |
 | `/trip/:slug/subscribe` | Inscrição do participante | ✅ |
 | `/trips/:id/roster` | Gestão: participantes e pagamentos | ✅ |
-| `/trip/:slug/pay` | Pagamento PIX (participante) | ⬜ Fase 1 |
+| `/trip/:slug/payment` | Pagamento PIX (QR do organizador) | ✅ |
+| `/pix-account` | Minha conta PIX (organizador) | ✅ |
 
 > As rotas de `/trips/:id/*` são a área autenticada do organizador; `/trip/:slug`
 > (singular) é a área pública do participante.

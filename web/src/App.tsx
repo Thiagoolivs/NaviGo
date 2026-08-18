@@ -5,11 +5,13 @@ import { Redirect, Route } from 'react-router-dom'
 import Dashboard from './pages/Dashboard'
 import Login from './pages/Login'
 import NewTrip from './pages/NewTrip'
+import PixAccount from './pages/PixAccount'
 import PublicTrip from './pages/PublicTrip'
 import Register from './pages/Register'
 import Roster from './pages/Roster'
 import Subscribe from './pages/Subscribe'
 import TripDetail from './pages/TripDetail'
+import TripPayment from './pages/TripPayment'
 
 setupIonicReact()
 
@@ -23,12 +25,14 @@ export default function App() {
           <Route exact path="/trips/new" component={NewTrip} />
           <Route exact path="/trips/:id" component={TripDetail} />
           <Route exact path="/trips/:id/roster" component={Roster} />
+          <Route exact path="/pix-account" component={PixAccount} />
           {/* Autenticação */}
           <Route exact path="/login" component={Login} />
           <Route exact path="/register" component={Register} />
           {/* Página pública da viagem, acessada por link/QR */}
           <Route exact path="/trip/:slug" component={PublicTrip} />
           <Route exact path="/trip/:slug/subscribe" component={Subscribe} />
+          <Route exact path="/trip/:slug/payment" component={TripPayment} />
           <Route render={() => <Redirect to="/" />} />
         </IonRouterOutlet>
       </IonReactRouter>

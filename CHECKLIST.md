@@ -72,7 +72,7 @@ item é uma tarefa concreta. Marque `[x]` conforme concluir.
 - [x] 🔴 🖥️ Endpoints de cadastro/login (dj-rest-auth + django-allauth; JWT em cookie httpOnly)
 - [x] 🔴 📱 Telas de login e cadastro *(recuperação de senha: endpoint pronto, tela pendente)*
 - [ ] 🔴 Login social (Google) — *backend e caminho prontos; falta credenciais + botão funcional*
-- [ ] 🟡 Perfil do organizador (nome, telefone, foto, dados PIX)
+- [x] 🟡 **Conta PIX do organizador**: chave, favorecido e **QR Code** (copia e cola gerado ou imagem enviada)
 - [x] 🟡 Verificação de e-mail *(configurada como `optional` em dev)*
 
 ### 2. Criar viagem
@@ -101,7 +101,7 @@ item é uma tarefa concreta. Marque `[x]` conforme concluir.
 ### 5. Página pública e convites
 - [x] 🔴 🖥️ Endpoint público da viagem por `slug` *(geração de convite/QR pendente)*
 - [x] 🔴 📱 Página pública da viagem + botão de inscrição
-- [ ] 🔴 Geração de **QR Code** do convite (lib no back ou front)
+- [ ] 🔴 Geração de **QR Code** do convite (lib `qrcode` já disponível)
 - [x] 🔴 Formulário de inscrição do participante (dados, saúde, responsável, parcelas + aceite LGPD)
 - [x] 🟡 Controle de limite de vagas (fecha ao lotar — 409)
 - [ ] 🟢 Lista de espera quando esgotar
@@ -119,7 +119,7 @@ item é uma tarefa concreta. Marque `[x]` conforme concluir.
 - [x] 🔴 🖥️ Geração de **QR Code PIX** por parcela *(endpoint pronto; falta validar no sandbox do Asaas)*
 - [ ] 🔴 🖥️ **Webhook** validado por assinatura e **idempotente** → baixa automática
 - [x] 🔴 🖥️ Controle de parcelas (valor, vencimento, status) + **re-parcelamento** preservando o já pago
-- [x] 🔴 📱 Painel de inadimplência (pagos/parciais/a pagar/atrasados) *(tela de pagamento do participante pendente)*
+- [x] 🔴 📱 Painel de inadimplência (pagos/parciais/a pagar/atrasados) + **tela de pagamento do participante (QR do organizador)**
 - [ ] 🟡 **Lembretes automáticos** de cobrança (tarefas Celery)
 - [ ] 🟡 Conciliação e tratamento de estorno/falha
 - [ ] 🟢 Comprovante/recibo de pagamento

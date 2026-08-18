@@ -21,7 +21,7 @@ import {
   useIonRouter,
   useIonViewWillEnter,
 } from '@ionic/react'
-import { add, logOutOutline } from 'ionicons/icons'
+import { add, logOutOutline, qrCodeOutline } from 'ionicons/icons'
 import { useCallback, useState } from 'react'
 
 import { getCurrentUser, logout } from '../lib/api/auth'
@@ -62,6 +62,9 @@ export default function Dashboard() {
         <IonToolbar color="primary">
           <IonTitle>Minhas viagens</IonTitle>
           <IonButtons slot="end">
+            <IonButton routerLink="/pix-account" aria-label="Minha conta PIX">
+              <IonIcon slot="icon-only" icon={qrCodeOutline} />
+            </IonButton>
             <IonButton onClick={sair} aria-label="Sair">
               <IonIcon slot="icon-only" icon={logOutOutline} />
             </IonButton>
