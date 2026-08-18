@@ -84,6 +84,14 @@ export default function PublicTripPage() {
             >
               {trip.spots_left === 0 ? 'Vagas esgotadas' : 'Quero me inscrever'}
             </IonButton>
+            <IonButton
+              expand="block"
+              fill="outline"
+              className="ion-margin-top"
+              routerLink={`/trip/${slug}/payment`}
+            >
+              Já me inscrevi — quero pagar
+            </IonButton>
           </>
         )}
       </IonContent>

@@ -1,23 +1,21 @@
 # Imagem de produção da API do NaviGo (Django + gunicorn).
+#
+# Usa apenas pip e a imagem oficial do Python — sem depender de um segundo
+# registry para o instalador de dependências. As versões vêm de
+# requirements.txt (gerado a partir de uv.lock; ver README).
 FROM python:3.11-slim
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    UV_COMPILE_BYTECODE=1 \
-    UV_LINK_MODE=copy \
-    DJANGO_SETTINGS_MODULE=navigo.settings \
-    # Usa o venv diretamente: evita que `uv run` tente re-sincronizar
-    # (e reinstalar dependências de dev) durante o build e no start.
-    PATH="/app/.venv/bin:$PATH"
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    DJANGO_SETTINGS_MODULE=navigo.settings
 
 WORKDIR /app
 
-# uv (gerenciador de dependências)
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
-
 # Dependências primeiro — aproveita o cache de camadas
-COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Código da aplicação
 COPY . .

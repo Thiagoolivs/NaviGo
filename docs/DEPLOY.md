@@ -13,7 +13,11 @@ Guia para publicar o NaviGo para **testes**. Arquitetura de deploy:
 ## 1. API no Railway
 
 1. **New Project → Deploy from GitHub repo** e selecione o repositório.
-2. No serviço, defina **Root Directory = `api`** (o Railway usa o `api/Dockerfile`).
+2. No serviço, defina **Root Directory = `api`**.
+   ⚠️ **Este passo é obrigatório.** Sem ele o Railway tenta detectar o projeto na
+   raiz do repositório (que é um monorepo) e o build falha antes de começar.
+   Com o Root Directory correto, ele usa o `api/Dockerfile` (declarado também em
+   `api/railway.json`).
 3. Adicione o plugin **PostgreSQL** (injeta `DATABASE_URL` automaticamente).
 4. Em **Variables**, defina:
 
@@ -71,7 +75,24 @@ Guia para publicar o NaviGo para **testes**. Arquitetura de deploy:
 
 ---
 
-## 4. Checklist de produção (além do teste)
+## 4. Se o deploy falhar
+
+| Sintoma no log | Causa provável | O que fazer |
+|----------------|----------------|-------------|
+| `Nixpacks was unable to generate a build plan` / build nem inicia | **Root Directory** não está como `api` | Ajuste em Settings → Root Directory |
+| `no such file or directory: requirements.txt` | Build rodando a partir da raiz do repo | Mesma correção acima |
+| `ModuleNotFoundError` ao subir | Dependência nova sem regenerar o `requirements.txt` | Rode `uv export --no-dev --format requirements-txt --no-emit-project -o requirements.txt` e commite |
+| `DisallowedHost` / `Bad Request (400)` | Domínio não liberado | Gere o domínio no Railway (ele injeta `RAILWAY_PUBLIC_DOMAIN`, já tratado) ou defina `DJANGO_ALLOWED_HOSTS` |
+| `CSRF verification failed` no PWA | Origem do front não confiável | Adicione a URL do PWA em `CSRF_TRUSTED_ORIGINS` e em `CORS_ALLOWED_ORIGINS` |
+| Erro de conexão com o banco | Plugin PostgreSQL ausente | Adicione o plugin (ele injeta `DATABASE_URL`) |
+| Falha em `collectstatic` no build | Variável faltando | O build já passa `DJANGO_SECRET_KEY=build-only`; verifique alterações no `settings.py` |
+
+> A imagem usa **apenas pip e a imagem oficial do Python** — sem depender de um
+> segundo registry para instalar dependências.
+
+---
+
+## 5. Checklist de produção (além do teste)
 
 - [ ] `DJANGO_DEBUG=false` e `DJANGO_SECRET_KEY` forte
 - [ ] `CORS_ALLOWED_ORIGINS` apenas com a origem do PWA

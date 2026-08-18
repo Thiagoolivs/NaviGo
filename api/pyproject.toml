@@ -15,6 +15,7 @@ dependencies = [
     "uvicorn>=0.30",
     "whitenoise>=6.7",  # serve arquivos estáticos em produção
     "requests>=2.32",  # integrações HTTP (Asaas, Gemini)
+    "qrcode[pil]>=8.0",  # QR Code do PIX e do convite
     # Autenticação: allauth + dj-rest-auth (JWT), Google login
     "django-allauth>=65.3",
     "dj-rest-auth>=7.0",

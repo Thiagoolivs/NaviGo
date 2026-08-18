@@ -17,6 +17,16 @@ suba o `docker-compose` na raiz e aponte `DATABASE_URL`.
 
 Health check: `GET http://localhost:8000/api/v1/health/`.
 
+## Dependências
+
+As dependências são declaradas em `pyproject.toml` e resolvidas com **uv**
+(`uv.lock`). A imagem Docker instala a partir de `requirements.txt`, que é
+gerado do lock — **regenere-o sempre que adicionar ou atualizar uma dependência**:
+
+```bash
+uv export --no-dev --format requirements-txt --no-emit-project -o requirements.txt
+```
+
 ## Comandos úteis
 
 | Comando | O quê |
@@ -27,6 +37,7 @@ Health check: `GET http://localhost:8000/api/v1/health/`.
 | `uv run python manage.py makemigrations` | Gera migrações |
 | `uv run python manage.py createsuperuser` | Cria admin (`/admin/`) |
 | `celery -A navigo worker -l info` | Worker de tarefas (requer Redis) |
+| `uv export --no-dev --format requirements-txt --no-emit-project -o requirements.txt` | Atualiza o `requirements.txt` usado no Docker |
 
 ## Estrutura
 
