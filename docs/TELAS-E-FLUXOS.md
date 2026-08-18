@@ -4,9 +4,8 @@ Mapa das telas e dos fluxos do sistema, para os dois atores principais:
 **organizador** (quem cria e gere a viagem) e **participante** (quem se inscreve
 e paga). Marca a fase de cada tela (🟢 MVP · ⭐ Pro · 🏢 Business).
 
-> Estado atual (Fase 1): **Login**, **Cadastro**, **Painel**, **Criar viagem
-> (assistente)**, **Detalhe da viagem**, **Página pública**, **Inscrição do
-> participante** e **Gestão (participantes e pagamentos)** implementadas.
+> Estado atual (Fase 1): todas as telas abaixo estão implementadas em
+> **React + Tailwind**, incluindo a **landing** pública.
 
 ---
 
@@ -163,18 +162,18 @@ busca, mostrando de uma vez **pagamento** e **documentos entregues**.
 
 ## 5. Mapa telas → rotas (PWA)
 
-| Rota | Tela | Existe? |
+| Rota | Tela | Público |
 |------|------|---------|
-| `/login` | Login | ✅ |
-| `/register` | Cadastro | ✅ |
-| `/` | Painel (lista de viagens) | ✅ |
-| `/trip/:slug` | Página pública da viagem | ✅ |
-| `/trips/new` | Criar viagem (assistente) | ✅ |
-| `/trips/:id` | Detalhe: checklist + orçamento | ✅ |
-| `/trip/:slug/subscribe` | Inscrição do participante | ✅ |
-| `/trips/:id/roster` | Gestão: participantes e pagamentos | ✅ |
-| `/trip/:slug/payment` | Pagamento PIX (QR do organizador) | ✅ |
-| `/pix-account` | Minha conta PIX (organizador) | ✅ |
+| `/` | **Landing** — o que é o NaviGo, como funciona, para quem | Visitante |
+| `/login` · `/register` | Entrar e criar conta | Visitante |
+| `/app` | Painel: lista de viagens | Organizador |
+| `/app/viagens/nova` | Criar viagem (assistente em 3 etapas) | Organizador |
+| `/app/viagens/:id` | Detalhe: orçamento, checklist, publicar e link | Organizador |
+| `/app/viagens/:id/participantes` | Gestão: pagamentos e documentos | Organizador |
+| `/pix-account` | Conta para recebimento (chave + QR Code) | Organizador |
+| `/trip/:slug` | Página pública da viagem (link do convite) | Participante |
+| `/trip/:slug/inscricao` | Formulário de inscrição | Participante |
+| `/trip/:slug/pagamento` | Pagamento por PIX (QR do organizador) | Participante |
 
-> As rotas de `/trips/:id/*` são a área autenticada do organizador; `/trip/:slug`
-> (singular) é a área pública do participante.
+> `/app/*` é a área autenticada do organizador; `/trip/:slug` (singular) é a
+> área pública do participante, acessada pelo link do convite.

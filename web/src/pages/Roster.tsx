@@ -1,36 +1,26 @@
-import {
-  IonAccordion,
-  IonAccordionGroup,
-  IonBackButton,
-  IonBadge,
-  IonButtons,
-  IonCheckbox,
-  IonChip,
-  IonContent,
-  IonHeader,
-  IonItem,
-  IonLabel,
-  IonList,
-  IonNote,
-  IonPage,
-  IonSearchbar,
-  IonSelect,
-  IonSelectOption,
-  IonSpinner,
-  IonText,
-  IonTitle,
-  IonToolbar,
-  useIonViewWillEnter,
-} from '@ionic/react'
-import { useCallback, useMemo, useState } from 'react'
-import { useParams } from 'react-router'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useHistory, useParams } from 'react-router-dom'
 
+import { AppLayout, PageHeader } from '../components/Layout'
+import { Check, ChevronDown, Doc, Search, Users } from '../components/icons'
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  Input,
+  Loading,
+  Select,
+  Stat,
+} from '../components/ui'
+import { brl, cn, formatDate } from '../lib/format'
+import { ApiError } from '../lib/api/client'
 import {
   type Payment,
   type PaymentSituation,
   type RosterRow,
   type RosterSummary,
-  SITUATION_COLOR,
   SITUATION_LABEL,
   getRoster,
   listPayments,
@@ -39,12 +29,14 @@ import {
   setRequirementDelivered,
   unpayInstallment,
 } from '../lib/api/roster'
-import './Roster.css'
 
-const brl = (v: string | number) =>
-  Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-
-const data = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString('pt-BR')
+const TONE: Record<PaymentSituation, 'success' | 'warning' | 'neutral' | 'danger'> = {
+  pago: 'success',
+  parcial: 'warning',
+  a_pagar: 'neutral',
+  atrasado: 'danger',
+  sem_cobranca: 'neutral',
+}
 
 type Filtro = 'todos' | PaymentSituation | 'pendencias' | 'menores'
 
@@ -58,68 +50,42 @@ const FILTROS: { valor: Filtro; rotulo: string }[] = [
   { valor: 'menores', rotulo: 'Menores' },
 ]
 
-function Resumo({ s }: { s: RosterSummary }) {
-  const cartoes = [
-    { rotulo: 'Inscritos', valor: String(s.participants), cor: '' },
-    { rotulo: 'Pagos', valor: String(s.paid), cor: 'success' },
-    { rotulo: 'A pagar', valor: String(s.to_pay + s.partial), cor: 'warning' },
-    { rotulo: 'Atrasados', valor: String(s.overdue), cor: 'danger' },
-    { rotulo: 'Falta documento', valor: String(s.pending_requirements), cor: 'danger' },
-    { rotulo: 'Menores', valor: String(s.minors), cor: '' },
-  ]
-  return (
-    <>
-      <div className="resumo-grid">
-        {cartoes.map((c) => (
-          <div className="resumo-card" key={c.rotulo}>
-            <div className={`resumo-valor ${c.cor ? `ion-color-${c.cor}` : ''}`}>{c.valor}</div>
-            <div className="resumo-rotulo">{c.rotulo}</div>
-          </div>
-        ))}
-      </div>
-      <div className="resumo-grid">
-        <div className="resumo-card">
-          <div className="resumo-valor">{brl(s.total_received)}</div>
-          <div className="resumo-rotulo">Recebido</div>
-        </div>
-        <div className="resumo-card">
-          <div className="resumo-valor">{brl(s.total_remaining)}</div>
-          <div className="resumo-rotulo">A receber</div>
-        </div>
-        <div className="resumo-card">
-          <div className="resumo-valor">{brl(s.total_expected)}</div>
-          <div className="resumo-rotulo">Total esperado</div>
-        </div>
-      </div>
-    </>
-  )
-}
-
 export default function Roster() {
   const { id } = useParams<{ id: string }>()
   const tripId = Number(id)
+  const history = useHistory()
 
   const [summary, setSummary] = useState<RosterSummary | null>(null)
   const [linhas, setLinhas] = useState<RosterRow[]>([])
   const [pagamentos, setPagamentos] = useState<Payment[]>([])
   const [carregando, setCarregando] = useState(true)
+  const [erro, setErro] = useState<string | null>(null)
   const [busca, setBusca] = useState('')
   const [filtro, setFiltro] = useState<Filtro>('todos')
+  const [aberto, setAberto] = useState<number | null>(null)
 
   const carregar = useCallback(async () => {
-    const [roster, pgtos] = await Promise.all([getRoster(tripId), listPayments(tripId)])
-    setSummary(roster.summary)
-    setLinhas(roster.participants)
-    setPagamentos(pgtos)
-    setCarregando(false)
-  }, [tripId])
+    try {
+      const [roster, pgtos] = await Promise.all([getRoster(tripId), listPayments(tripId)])
+      setSummary(roster.summary)
+      setLinhas(roster.participants)
+      setPagamentos(pgtos)
+    } catch (e) {
+      if (e instanceof ApiError && (e.status === 401 || e.status === 403)) {
+        history.replace('/login')
+        return
+      }
+      setErro('Não foi possível carregar os participantes.')
+    } finally {
+      setCarregando(false)
+    }
+  }, [tripId, history])
 
-  useIonViewWillEnter(() => {
+  useEffect(() => {
     void carregar()
-  })
+  }, [carregar])
 
-  const pagamentoDe = (participanteId: number) =>
-    pagamentos.find((p) => p.participant === participanteId)
+  const pagamentoDe = (pid: number) => pagamentos.find((p) => p.participant === pid)
 
   const visiveis = useMemo(() => {
     const termo = busca.trim().toLowerCase()
@@ -133,220 +99,264 @@ export default function Roster() {
     })
   }, [linhas, busca, filtro])
 
-  async function alternarParcela(parcelaId: number, paga: boolean) {
-    await (paga ? unpayInstallment(parcelaId) : payInstallment(parcelaId))
-    await carregar()
-  }
-
-  async function alternarRequisito(statusId: number, entregue: boolean) {
-    await setRequirementDelivered(statusId, !entregue)
-    await carregar()
-  }
-
-  async function reparcelar(pagamentoId: number, parcelas: number) {
-    await replanPayment(pagamentoId, parcelas)
-    await carregar()
+  if (carregando) {
+    return (
+      <AppLayout wide>
+        <Loading />
+      </AppLayout>
+    )
   }
 
   return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar color="primary">
-          <IonButtons slot="start">
-            <IonBackButton defaultHref={`/trips/${tripId}`} />
-          </IonButtons>
-          <IonTitle>Gestão da viagem</IonTitle>
-        </IonToolbar>
-      </IonHeader>
+    <AppLayout wide>
+      <PageHeader
+        title="Participantes e pagamentos"
+        subtitle="Quem pagou, quem está devendo e o que falta entregar."
+        backTo={`/app/viagens/${tripId}`}
+      />
 
-      <IonContent>
-        {carregando ? (
-          <div className="ion-text-center ion-padding">
-            <IonSpinner />
+      {erro && (
+        <div className="mb-5">
+          <Alert>{erro}</Alert>
+        </div>
+      )}
+
+      {summary && linhas.length > 0 && (
+        <>
+          <div className="mb-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            <Stat label="Inscritos" value={summary.participants} />
+            <Stat label="Pagos" value={summary.paid} tone="success" />
+            <Stat label="A pagar" value={summary.to_pay + summary.partial} tone="warning" />
+            <Stat label="Atrasados" value={summary.overdue} tone="danger" />
+            <Stat label="Falta documento" value={summary.pending_requirements} tone="danger" />
+            <Stat label="Menores" value={summary.minors} />
           </div>
-        ) : (
-          <>
-            {summary && <Resumo s={summary} />}
+          <div className="mb-6 grid gap-3 sm:grid-cols-3">
+            <Stat label="Já recebido" value={brl(summary.total_received)} tone="success" />
+            <Stat label="A receber" value={brl(summary.total_remaining)} tone="warning" />
+            <Stat label="Total esperado" value={brl(summary.total_expected)} tone="brand" />
+          </div>
+        </>
+      )}
 
-            <IonSearchbar
-              placeholder="Buscar por nome ou e-mail"
-              value={busca}
-              onIonInput={(e) => setBusca(e.detail.value ?? '')}
-            />
-
-            <div className="filtros">
+      {linhas.length === 0 ? (
+        <EmptyState
+          icon={<Users />}
+          title="Ninguém se inscreveu ainda"
+          description="Compartilhe o link da viagem com o grupo. Cada pessoa se inscreve sozinha e aparece aqui."
+          action={
+            <Button variant="secondary" onClick={() => history.push(`/app/viagens/${tripId}`)}>
+              Ver o link de inscrição
+            </Button>
+          }
+        />
+      ) : (
+        <>
+          <div className="mb-4 space-y-3">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
+              <Input
+                className="pl-9"
+                placeholder="Buscar por nome ou e-mail"
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-wrap gap-2">
               {FILTROS.map((f) => (
-                <IonChip
+                <button
                   key={f.valor}
-                  color={filtro === f.valor ? 'primary' : undefined}
-                  outline={filtro !== f.valor}
                   onClick={() => setFiltro(f.valor)}
+                  className={cn(
+                    'rounded-full border px-3 py-1.5 text-sm font-medium transition',
+                    filtro === f.valor
+                      ? 'border-brand-600 bg-brand-600 text-white'
+                      : 'border-line bg-white text-ink-soft hover:border-line-strong',
+                  )}
                 >
                   {f.rotulo}
-                </IonChip>
+                </button>
               ))}
             </div>
+          </div>
 
-            {visiveis.length === 0 ? (
-              <div className="ion-padding ion-text-center">
-                <IonText color="medium">
-                  <p>Nenhum participante neste filtro.</p>
-                </IonText>
+          {visiveis.length === 0 ? (
+            <Card>
+              <div className="px-5 py-12 text-center text-ink-muted">
+                Nenhum participante neste filtro.
               </div>
-            ) : (
-              <IonAccordionGroup>
-                {visiveis.map((l) => {
-                  const pgto = pagamentoDe(l.id)
-                  return (
-                    <IonAccordion key={l.id} value={String(l.id)}>
-                      <IonItem slot="header">
-                        <IonLabel>
-                          <h2>
-                            {l.name}
-                            {l.is_minor && (
-                              <IonBadge color="tertiary" className="badge-inline">
-                                menor
-                              </IonBadge>
-                            )}
-                          </h2>
-                          <p>
-                            {brl(l.payment.paid)} de {brl(l.payment.total)}
-                            {l.payment.installments_count > 0 &&
-                              ` · ${l.payment.installments_paid}/${l.payment.installments_count} parcelas`}
-                          </p>
-                          {!l.requirements.all_required_delivered && (
-                            <IonNote color="danger">
-                              falta: {l.requirements.required_pending.join(', ')}
-                            </IonNote>
-                          )}
-                        </IonLabel>
-                        <IonBadge slot="end" color={SITUATION_COLOR[l.payment.situation]}>
-                          {SITUATION_LABEL[l.payment.situation]}
-                        </IonBadge>
-                      </IonItem>
+            </Card>
+          ) : (
+            <div className="space-y-2.5">
+              {visiveis.map((l) => {
+                const pgto = pagamentoDe(l.id)
+                const expandido = aberto === l.id
+                return (
+                  <Card key={l.id}>
+                    <button
+                      onClick={() => setAberto(expandido ? null : l.id)}
+                      className="flex w-full items-center gap-4 px-5 py-4 text-left"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-semibold">{l.name}</span>
+                          {l.is_minor && <Badge tone="accent">menor</Badge>}
+                        </div>
+                        <div className="mt-1 text-sm text-ink-muted">
+                          {brl(l.payment.paid)} de {brl(l.payment.total)}
+                          {l.payment.installments_count > 0 &&
+                            ` · ${l.payment.installments_paid}/${l.payment.installments_count} parcelas`}
+                        </div>
+                        {!l.requirements.all_required_delivered && (
+                          <div className="mt-1 text-sm text-red-600">
+                            Falta: {l.requirements.required_pending.join(', ')}
+                          </div>
+                        )}
+                      </div>
+                      <Badge tone={TONE[l.payment.situation]}>
+                        {SITUATION_LABEL[l.payment.situation]}
+                      </Badge>
+                      <ChevronDown
+                        className={cn(
+                          'h-5 w-5 shrink-0 text-ink-muted transition',
+                          expandido && 'rotate-180',
+                        )}
+                      />
+                    </button>
 
-                      <div slot="content" className="detalhe">
+                    {expandido && (
+                      <div className="space-y-5 border-t border-line bg-canvas px-5 py-5">
                         {/* Contato e logística */}
-                        <IonList lines="none">
-                          {l.phone && (
-                            <IonItem>
-                              <IonLabel>Telefone</IonLabel>
-                              <IonNote slot="end">{l.phone}</IonNote>
-                            </IonItem>
-                          )}
-                          {l.is_minor && l.guardian_name && (
-                            <IonItem>
-                              <IonLabel>Responsável</IonLabel>
-                              <IonNote slot="end">
-                                {l.guardian_name} {l.guardian_phone && `· ${l.guardian_phone}`}
-                              </IonNote>
-                            </IonItem>
-                          )}
-                          {l.boarding_point && (
-                            <IonItem>
-                              <IonLabel>Embarque</IonLabel>
-                              <IonNote slot="end">{l.boarding_point}</IonNote>
-                            </IonItem>
-                          )}
-                          {l.shirt_size && (
-                            <IonItem>
-                              <IonLabel>Camiseta</IonLabel>
-                              <IonNote slot="end">{l.shirt_size}</IonNote>
-                            </IonItem>
-                          )}
-                          {l.dietary_restrictions && (
-                            <IonItem>
-                              <IonLabel className="ion-text-wrap">Restrição alimentar</IonLabel>
-                              <IonNote slot="end">{l.dietary_restrictions}</IonNote>
-                            </IonItem>
-                          )}
-                          {l.medical_notes && (
-                            <IonItem>
-                              <IonLabel className="ion-text-wrap">
-                                Observações médicas
-                                <p>{l.medical_notes}</p>
-                              </IonLabel>
-                            </IonItem>
-                          )}
-                        </IonList>
-
-                        {/* Documentos / autorizações */}
-                        {l.requirements.items.length > 0 && (
-                          <IonList>
-                            <IonItem lines="none">
-                              <IonLabel>
-                                <strong>Documentos</strong>
-                              </IonLabel>
-                              <IonNote slot="end">
-                                {l.requirements.delivered}/{l.requirements.total}
-                              </IonNote>
-                            </IonItem>
-                            {l.requirements.items.map((r) => (
-                              <IonItem key={r.id}>
-                                <IonCheckbox
-                                  checked={r.delivered}
-                                  onIonChange={() => alternarRequisito(r.id, r.delivered)}
-                                  labelPlacement="end"
-                                  justify="start"
-                                >
-                                  <span className="ion-text-wrap">
-                                    {r.name}
-                                    {r.required && <span className="obrigatorio"> *</span>}
-                                  </span>
-                                </IonCheckbox>
-                              </IonItem>
+                        <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+                          {[
+                            ['Telefone', l.phone],
+                            ['E-mail', l.email],
+                            [
+                              'Responsável',
+                              l.is_minor && l.guardian_name
+                                ? `${l.guardian_name}${l.guardian_phone ? ` · ${l.guardian_phone}` : ''}`
+                                : '',
+                            ],
+                            ['Embarque', l.boarding_point],
+                            ['Camiseta', l.shirt_size],
+                            ['Restrição alimentar', l.dietary_restrictions],
+                            ['Observações médicas', l.medical_notes],
+                          ]
+                            .filter(([, v]) => v)
+                            .map(([k, v]) => (
+                              <div key={k as string} className="flex gap-2">
+                                <dt className="shrink-0 text-ink-muted">{k}:</dt>
+                                <dd className="min-w-0 break-words">{v}</dd>
+                              </div>
                             ))}
-                          </IonList>
+                        </dl>
+
+                        {/* Documentos */}
+                        {l.requirements.items.length > 0 && (
+                          <div>
+                            <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold">
+                              <Doc className="h-4 w-4 text-brand-600" />
+                              Documentos ({l.requirements.delivered}/{l.requirements.total})
+                            </h3>
+                            <div className="space-y-1.5">
+                              {l.requirements.items.map((r) => (
+                                <label
+                                  key={r.id}
+                                  className="flex cursor-pointer items-center gap-2.5 text-[15px]"
+                                >
+                                  <button
+                                    type="button"
+                                    onClick={async () => {
+                                      await setRequirementDelivered(r.id, !r.delivered)
+                                      await carregar()
+                                    }}
+                                    className={cn(
+                                      'flex h-5 w-5 shrink-0 items-center justify-center rounded border transition',
+                                      r.delivered
+                                        ? 'border-brand-600 bg-brand-600 text-white'
+                                        : 'border-line-strong bg-white hover:border-brand-500',
+                                    )}
+                                    aria-label={r.name}
+                                  >
+                                    {r.delivered && <Check className="h-3 w-3" />}
+                                  </button>
+                                  <span className={cn(r.delivered && 'text-ink-muted')}>
+                                    {r.name}
+                                    {r.required && <span className="text-red-500"> *</span>}
+                                  </span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
                         )}
 
                         {/* Parcelas */}
                         {pgto && (
-                          <IonList>
-                            <IonItem lines="none">
-                              <IonLabel>
-                                <strong>Parcelas</strong>
-                              </IonLabel>
-                              <IonSelect
-                                slot="end"
-                                interface="popover"
-                                placeholder="Reparcelar"
-                                onIonChange={(e) => reparcelar(pgto.id, Number(e.detail.value))}
-                              >
-                                {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
-                                  <IonSelectOption key={n} value={n}>
-                                    {n === 1 ? 'À vista' : `${n}x`}
-                                  </IonSelectOption>
-                                ))}
-                              </IonSelect>
-                            </IonItem>
-                            {pgto.installments.map((p, i) => (
-                              <IonItem key={p.id}>
-                                <IonCheckbox
-                                  checked={p.status === 'paid'}
-                                  onIonChange={() =>
-                                    alternarParcela(p.id, p.status === 'paid')
-                                  }
-                                  labelPlacement="end"
-                                  justify="start"
+                          <div>
+                            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                              <h3 className="text-sm font-semibold">Parcelas</h3>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-ink-muted">Reparcelar:</span>
+                                <Select
+                                  className="h-9 w-28 py-1 text-sm"
+                                  value=""
+                                  onChange={async (e) => {
+                                    if (!e.target.value) return
+                                    await replanPayment(pgto.id, Number(e.target.value))
+                                    await carregar()
+                                  }}
                                 >
-                                  <span>
-                                    {i + 1}ª · {brl(p.amount)}
+                                  <option value="">Escolher</option>
+                                  {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
+                                    <option key={n} value={n}>
+                                      {n === 1 ? 'À vista' : `${n}x`}
+                                    </option>
+                                  ))}
+                                </Select>
+                              </div>
+                            </div>
+                            <div className="divide-y divide-line rounded-lg border border-line bg-white">
+                              {pgto.installments.map((p, i) => (
+                                <div key={p.id} className="flex items-center gap-3 px-4 py-2.5">
+                                  <button
+                                    onClick={async () => {
+                                      await (p.status === 'paid'
+                                        ? unpayInstallment(p.id)
+                                        : payInstallment(p.id))
+                                      await carregar()
+                                    }}
+                                    className={cn(
+                                      'flex h-5 w-5 shrink-0 items-center justify-center rounded border transition',
+                                      p.status === 'paid'
+                                        ? 'border-emerald-600 bg-emerald-600 text-white'
+                                        : 'border-line-strong hover:border-emerald-500',
+                                    )}
+                                    aria-label={
+                                      p.status === 'paid' ? 'Desfazer baixa' : 'Marcar como paga'
+                                    }
+                                  >
+                                    {p.status === 'paid' && <Check className="h-3 w-3" />}
+                                  </button>
+                                  <span className="text-[15px]">
+                                    {i + 1}ª · <span className="tabular-nums">{brl(p.amount)}</span>
                                   </span>
-                                </IonCheckbox>
-                                <IonNote slot="end">vence {data(p.due_date)}</IonNote>
-                              </IonItem>
-                            ))}
-                          </IonList>
+                                  <span className="ml-auto text-sm text-ink-muted">
+                                    vence {formatDate(p.due_date)}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
                         )}
                       </div>
-                    </IonAccordion>
-                  )
-                })}
-              </IonAccordionGroup>
-            )}
-          </>
-        )}
-      </IonContent>
-    </IonPage>
+                    )}
+                  </Card>
+                )
+              })}
+            </div>
+          )}
+        </>
+      )}
+    </AppLayout>
   )
 }

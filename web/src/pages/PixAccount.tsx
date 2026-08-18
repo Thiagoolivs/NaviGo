@@ -1,29 +1,21 @@
-import {
-  IonBackButton,
-  IonButton,
-  IonButtons,
-  IonContent,
-  IonHeader,
-  IonInput,
-  IonItem,
-  IonLabel,
-  IonList,
-  IonListHeader,
-  IonNote,
-  IonPage,
-  IonSegment,
-  IonSegmentButton,
-  IonSelect,
-  IonSelectOption,
-  IonSpinner,
-  IonText,
-  IonTextarea,
-  IonTitle,
-  IonToolbar,
-  useIonViewWillEnter,
-} from '@ionic/react'
-import { type ChangeEvent, useState } from 'react'
+import { type ChangeEvent, useCallback, useEffect, useState } from 'react'
+import { useHistory } from 'react-router-dom'
 
+import { AppLayout, PageHeader } from '../components/Layout'
+import { QrCode } from '../components/icons'
+import {
+  Alert,
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  Field,
+  Input,
+  Loading,
+  Select,
+  Textarea,
+} from '../components/ui'
+import { cn } from '../lib/format'
 import { ApiError } from '../lib/api/client'
 import {
   PIX_KEY_TYPES,
@@ -36,35 +28,46 @@ import {
 const MAX_BYTES = 512 * 1024
 
 export default function PixAccount() {
+  const history = useHistory()
   const [conta, setConta] = useState<PixAccountData | null>(null)
   const [carregando, setCarregando] = useState(true)
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
-  const [ok, setOk] = useState(false)
+  const [salvo, setSalvo] = useState(false)
 
   const [modo, setModo] = useState<'codigo' | 'imagem'>('codigo')
-  const [ownerName, setOwnerName] = useState('')
-  const [bank, setBank] = useState('')
-  const [key, setKey] = useState('')
-  const [keyType, setKeyType] = useState<PixKeyType>('')
+  const [favorecido, setFavorecido] = useState('')
+  const [banco, setBanco] = useState('')
+  const [chave, setChave] = useState('')
+  const [tipoChave, setTipoChave] = useState<PixKeyType>('')
   const [payload, setPayload] = useState('')
   const [imagem, setImagem] = useState('')
 
-  useIonViewWillEnter(() => {
-    getPixAccount()
-      .then((c) => {
-        setConta(c)
-        setOwnerName(c.pix_owner_name)
-        setBank(c.pix_bank)
-        setKey(c.pix_key)
-        setKeyType(c.pix_key_type)
-        setPayload(c.pix_payload)
-        setImagem(c.pix_qr_image)
-        if (!c.pix_payload && c.pix_qr_image) setModo('imagem')
-      })
-      .catch(() => setErro('Não foi possível carregar a conta PIX.'))
-      .finally(() => setCarregando(false))
-  })
+  const carregar = useCallback(async () => {
+    try {
+      const c = await getPixAccount()
+      setConta(c)
+      setFavorecido(c.pix_owner_name)
+      setBanco(c.pix_bank)
+      setChave(c.pix_key)
+      setTipoChave(c.pix_key_type)
+      setPayload(c.pix_payload)
+      setImagem(c.pix_qr_image)
+      if (!c.pix_payload && c.pix_qr_image) setModo('imagem')
+    } catch (e) {
+      if (e instanceof ApiError && (e.status === 401 || e.status === 403)) {
+        history.replace('/login')
+        return
+      }
+      setErro('Não foi possível carregar a conta.')
+    } finally {
+      setCarregando(false)
+    }
+  }, [history])
+
+  useEffect(() => {
+    void carregar()
+  }, [carregar])
 
   function selecionarArquivo(e: ChangeEvent<HTMLInputElement>) {
     const arquivo = e.target.files?.[0]
@@ -83,20 +86,21 @@ export default function PixAccount() {
 
   async function salvar() {
     setErro(null)
-    setOk(false)
+    setSalvo(false)
     setSalvando(true)
     try {
-      const atualizada = await savePixAccount({
-        pix_owner_name: ownerName,
-        pix_bank: bank,
-        pix_key: key,
-        pix_key_type: keyType,
-        // Guarda só o modo escolhido, para não exibir um QR antigo por engano.
-        pix_payload: modo === 'codigo' ? payload : '',
-        pix_qr_image: modo === 'imagem' ? imagem : '',
-      })
-      setConta(atualizada)
-      setOk(true)
+      setConta(
+        await savePixAccount({
+          pix_owner_name: favorecido,
+          pix_bank: banco,
+          pix_key: chave,
+          pix_key_type: tipoChave,
+          // Guarda só o modo escolhido, para não exibir um QR antigo por engano.
+          pix_payload: modo === 'codigo' ? payload : '',
+          pix_qr_image: modo === 'imagem' ? imagem : '',
+        }),
+      )
+      setSalvo(true)
     } catch (e) {
       setErro(e instanceof ApiError ? e.firstMessage : 'Não foi possível salvar.')
     } finally {
@@ -104,160 +108,143 @@ export default function PixAccount() {
     }
   }
 
+  if (carregando) {
+    return (
+      <AppLayout>
+        <Loading />
+      </AppLayout>
+    )
+  }
+
   return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar color="primary">
-          <IonButtons slot="start">
-            <IonBackButton defaultHref="/" />
-          </IonButtons>
-          <IonTitle>Minha conta PIX</IonTitle>
-        </IonToolbar>
-      </IonHeader>
+    <AppLayout>
+      <PageHeader
+        title="Conta para recebimento"
+        subtitle="Cadastre seu PIX para que os participantes paguem direto para você."
+        backTo="/app"
+      />
 
-      <IonContent className="ion-padding">
-        {carregando ? (
-          <div className="ion-text-center">
-            <IonSpinner />
-          </div>
-        ) : (
-          <>
-            <IonText>
-              <p>
-                Cadastre o QR Code da sua conta para que os participantes paguem
-                direto para você.
-              </p>
-            </IonText>
+      <div className="space-y-5">
+        {erro && <Alert>{erro}</Alert>}
+        {salvo && <Alert tone="success">Conta salva com sucesso.</Alert>}
 
-            {erro && (
-              <IonText color="danger">
-                <p>{erro}</p>
-              </IonText>
-            )}
-            {ok && (
-              <IonText color="success">
-                <p>Conta PIX salva.</p>
-              </IonText>
-            )}
-
-            {conta?.qr_code && (
-              <div className="ion-text-center ion-margin-bottom">
-                <img
-                  src={conta.qr_code}
-                  alt="QR Code PIX cadastrado"
-                  style={{ maxWidth: 220, width: '100%', imageRendering: 'pixelated' }}
-                />
-                <IonNote>
-                  <p>QR Code atual</p>
-                </IonNote>
+        {conta?.qr_code && (
+          <Card>
+            <CardBody className="flex flex-col items-center py-7">
+              <div className="rounded-card border border-line p-4">
+                <img src={conta.qr_code} alt="QR Code PIX cadastrado" className="h-48 w-48" />
               </div>
-            )}
+              <p className="mt-3 text-sm text-ink-muted">
+                É este QR Code que o participante vê ao pagar.
+              </p>
+            </CardBody>
+          </Card>
+        )}
 
-            <IonList inset>
-              <IonListHeader>
-                <IonLabel>Dados do favorecido</IonLabel>
-              </IonListHeader>
-              <IonItem>
-                <IonInput
-                  label="Nome do favorecido"
-                  labelPlacement="floating"
-                  placeholder="Como aparece na sua conta"
-                  value={ownerName}
-                  onIonInput={(e) => setOwnerName(e.detail.value ?? '')}
+        <Card>
+          <CardHeader title="Dados do favorecido" />
+          <CardBody className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Nome do favorecido" hint="Como aparece na sua conta bancária.">
+                <Input
+                  placeholder="Ex.: Igreja Batista Central"
+                  value={favorecido}
+                  onChange={(e) => setFavorecido(e.target.value)}
                 />
-              </IonItem>
-              <IonItem>
-                <IonInput
-                  label="Instituição"
-                  labelPlacement="floating"
-                  placeholder="Banco / carteira digital"
-                  value={bank}
-                  onIonInput={(e) => setBank(e.detail.value ?? '')}
+              </Field>
+              <Field label="Instituição">
+                <Input
+                  placeholder="Banco ou carteira digital"
+                  value={banco}
+                  onChange={(e) => setBanco(e.target.value)}
                 />
-              </IonItem>
-              <IonItem>
-                <IonSelect
-                  label="Tipo da chave"
-                  value={keyType}
-                  onIonChange={(e) => setKeyType(e.detail.value)}
+              </Field>
+              <Field label="Tipo da chave">
+                <Select
+                  value={tipoChave}
+                  onChange={(e) => setTipoChave(e.target.value as PixKeyType)}
                 >
+                  <option value="">Selecione</option>
                   {PIX_KEY_TYPES.map((t) => (
-                    <IonSelectOption key={t.value} value={t.value}>
+                    <option key={t.value} value={t.value}>
                       {t.label}
-                    </IonSelectOption>
+                    </option>
                   ))}
-                </IonSelect>
-              </IonItem>
-              <IonItem>
-                <IonInput
-                  label="Chave PIX"
-                  labelPlacement="floating"
-                  value={key}
-                  onIonInput={(e) => setKey(e.detail.value ?? '')}
-                />
-              </IonItem>
-            </IonList>
+                </Select>
+              </Field>
+              <Field label="Chave PIX">
+                <Input value={chave} onChange={(e) => setChave(e.target.value)} />
+              </Field>
+            </div>
+          </CardBody>
+        </Card>
 
-            <IonSegment value={modo} onIonChange={(e) => setModo(e.detail.value as typeof modo)}>
-              <IonSegmentButton value="codigo">
-                <IonLabel>Copia e cola</IonLabel>
-              </IonSegmentButton>
-              <IonSegmentButton value="imagem">
-                <IonLabel>Enviar imagem</IonLabel>
-              </IonSegmentButton>
-            </IonSegment>
+        <Card>
+          <CardHeader
+            title="QR Code"
+            subtitle="Escolha como quer cadastrar o QR que os participantes vão usar."
+          />
+          <CardBody className="space-y-4">
+            <div className="inline-flex rounded-lg border border-line bg-canvas p-1">
+              {(
+                [
+                  ['codigo', 'Colar código'],
+                  ['imagem', 'Enviar imagem'],
+                ] as const
+              ).map(([v, label]) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => setModo(v)}
+                  className={cn(
+                    'rounded-md px-4 py-2 text-sm font-medium transition',
+                    modo === v ? 'bg-white text-ink shadow-sm' : 'text-ink-muted',
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
 
             {modo === 'codigo' ? (
-              <IonList inset>
-                <IonItem>
-                  <IonTextarea
-                    label="Código PIX copia e cola"
-                    labelPlacement="floating"
-                    autoGrow
-                    rows={4}
-                    placeholder="Cole aqui o código gerado no app do seu banco"
-                    value={payload}
-                    onIonInput={(e) => setPayload(e.detail.value ?? '')}
-                  />
-                </IonItem>
-                <IonItem lines="none">
-                  <IonNote className="ion-text-wrap">
-                    Geramos o QR Code a partir do código — é a opção mais confiável.
-                  </IonNote>
-                </IonItem>
-              </IonList>
+              <Field
+                label="Código PIX copia e cola"
+                hint="Geramos o QR Code a partir do código — é a opção mais confiável."
+              >
+                <Textarea
+                  rows={4}
+                  placeholder="Cole aqui o código gerado no app do seu banco"
+                  value={payload}
+                  onChange={(e) => setPayload(e.target.value)}
+                />
+              </Field>
             ) : (
-              <IonList inset>
-                <IonItem>
-                  <IonLabel position="stacked">Imagem do QR Code (PNG ou JPEG)</IonLabel>
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg"
-                    onChange={selecionarArquivo}
-                    style={{ marginTop: 8 }}
-                  />
-                </IonItem>
+              <Field label="Imagem do QR Code" hint="PNG ou JPEG, até 512 KB.">
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg"
+                  onChange={selecionarArquivo}
+                  className="block w-full text-sm text-ink-soft file:mr-3 file:rounded-lg
+                             file:border-0 file:bg-brand-50 file:px-4 file:py-2
+                             file:text-sm file:font-medium file:text-brand-700
+                             hover:file:bg-brand-100"
+                />
                 {imagem && (
-                  <IonItem lines="none">
-                    <img
-                      src={imagem}
-                      alt="Pré-visualização do QR Code"
-                      style={{ maxWidth: 180, margin: '8px auto' }}
-                    />
-                  </IonItem>
+                  <img
+                    src={imagem}
+                    alt="Pré-visualização do QR Code"
+                    className="mt-4 h-40 w-40 rounded-lg border border-line"
+                  />
                 )}
-                <IonItem lines="none">
-                  <IonNote className="ion-text-wrap">Tamanho máximo: 512 KB.</IonNote>
-                </IonItem>
-              </IonList>
+              </Field>
             )}
+          </CardBody>
+        </Card>
 
-            <IonButton expand="block" onClick={salvar} disabled={salvando}>
-              {salvando ? 'Salvando…' : 'Salvar conta PIX'}
-            </IonButton>
-          </>
-        )}
-      </IonContent>
-    </IonPage>
+        <Button size="lg" block loading={salvando} onClick={salvar}>
+          <QrCode className="h-4 w-4" /> Salvar conta de recebimento
+        </Button>
+      </div>
+    </AppLayout>
   )
 }

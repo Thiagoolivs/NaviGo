@@ -1,83 +1,64 @@
-import {
-  IonBackButton,
-  IonButton,
-  IonButtons,
-  IonCard,
-  IonCardContent,
-  IonCardHeader,
-  IonCardSubtitle,
-  IonCardTitle,
-  IonCheckbox,
-  IonContent,
-  IonHeader,
-  IonInput,
-  IonItem,
-  IonLabel,
-  IonList,
-  IonListHeader,
-  IonNote,
-  IonPage,
-  IonSelect,
-  IonSelectOption,
-  IonSpinner,
-  IonText,
-  IonTextarea,
-  IonTitle,
-  IonToggle,
-  IonToolbar,
-} from '@ionic/react'
 import { type FormEvent, useEffect, useState } from 'react'
-import { useParams } from 'react-router'
+import { Link, useParams } from 'react-router-dom'
 
+import { PublicLayout } from '../components/Layout'
+import { Check, Doc } from '../components/icons'
+import {
+  Alert,
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  Checkbox,
+  Field,
+  Input,
+  Loading,
+  Select,
+  Textarea,
+  Toggle,
+} from '../components/ui'
+import { brl, formatDate } from '../lib/format'
 import { ApiError, api } from '../lib/api/client'
 import { type EnrollmentResult, enroll } from '../lib/api/roster'
 
-interface PublicTrip {
+interface PublicTripData {
   name: string
   destination: string
-  start_date: string | null
-  duration_days: number | null
   spots_left: number | null
 }
 
 const TAMANHOS = ['PP', 'P', 'M', 'G', 'GG', 'XGG']
 
-const brl = (v: string | number) =>
-  Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-
-const data = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString('pt-BR')
-
 export default function Subscribe() {
   const { slug } = useParams<{ slug: string }>()
 
-  const [trip, setTrip] = useState<PublicTrip | null>(null)
+  const [trip, setTrip] = useState<PublicTripData | null>(null)
   const [carregando, setCarregando] = useState(true)
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [resultado, setResultado] = useState<EnrollmentResult | null>(null)
 
-  // Dados do formulário
-  const [name, setName] = useState('')
+  const [nome, setNome] = useState('')
   const [email, setEmail] = useState('')
-  const [phone, setPhone] = useState('')
-  const [document, setDocument] = useState('')
-  const [birthDate, setBirthDate] = useState('')
-  const [isMinor, setIsMinor] = useState(false)
-  const [guardianName, setGuardianName] = useState('')
-  const [guardianPhone, setGuardianPhone] = useState('')
-  const [emergencyContact, setEmergencyContact] = useState('')
-  const [healthInsurance, setHealthInsurance] = useState('')
-  const [dietary, setDietary] = useState('')
-  const [medical, setMedical] = useState('')
-  const [shirtSize, setShirtSize] = useState('')
-  const [boardingPoint, setBoardingPoint] = useState('')
-  const [notes, setNotes] = useState('')
-  const [installments, setInstallments] = useState(1)
-  const [consent, setConsent] = useState(false)
+  const [telefone, setTelefone] = useState('')
+  const [documento, setDocumento] = useState('')
+  const [nascimento, setNascimento] = useState('')
+  const [menor, setMenor] = useState(false)
+  const [responsavel, setResponsavel] = useState('')
+  const [telResponsavel, setTelResponsavel] = useState('')
+  const [emergencia, setEmergencia] = useState('')
+  const [plano, setPlano] = useState('')
+  const [restricao, setRestricao] = useState('')
+  const [medico, setMedico] = useState('')
+  const [camiseta, setCamiseta] = useState('')
+  const [embarque, setEmbarque] = useState('')
+  const [obs, setObs] = useState('')
+  const [parcelas, setParcelas] = useState(1)
+  const [aceite, setAceite] = useState(false)
 
   useEffect(() => {
     api
-      .get<PublicTrip>(`/public/trips/${slug}/`)
+      .get<PublicTripData>(`/public/trips/${slug}/`)
       .then(setTrip)
       .catch(() => setTrip(null))
       .finally(() => setCarregando(false))
@@ -88,32 +69,36 @@ export default function Subscribe() {
     setErro(null)
     setEnviando(true)
     try {
-      const res = await enroll(slug, {
-        name: name.trim(),
-        email,
-        phone,
-        document,
-        birth_date: birthDate || null,
-        is_minor: isMinor,
-        guardian_name: guardianName,
-        guardian_phone: guardianPhone,
-        emergency_contact: emergencyContact,
-        health_insurance: healthInsurance,
-        dietary_restrictions: dietary,
-        medical_notes: medical,
-        shirt_size: shirtSize,
-        boarding_point: boardingPoint,
-        notes,
-        consent_accepted: consent,
-        installments,
-      })
-      setResultado(res)
+      setResultado(
+        await enroll(slug, {
+          name: nome.trim(),
+          email,
+          phone: telefone,
+          document: documento,
+          birth_date: nascimento || null,
+          is_minor: menor,
+          guardian_name: responsavel,
+          guardian_phone: telResponsavel,
+          emergency_contact: emergencia,
+          health_insurance: plano,
+          dietary_restrictions: restricao,
+          medical_notes: medico,
+          shirt_size: camiseta,
+          boarding_point: embarque,
+          notes: obs,
+          consent_accepted: aceite,
+          installments: parcelas,
+        }),
+      )
+      window.scrollTo({ top: 0 })
     } catch (err) {
-      if (err instanceof ApiError) {
-        setErro(err.status === 409 ? 'As vagas para esta viagem esgotaram.' : err.firstMessage)
-      } else {
-        setErro('Não foi possível concluir a inscrição.')
-      }
+      setErro(
+        err instanceof ApiError
+          ? err.status === 409
+            ? 'As vagas para esta viagem acabaram.'
+            : err.firstMessage
+          : 'Não foi possível concluir a inscrição.',
+      )
     } finally {
       setEnviando(false)
     }
@@ -121,318 +106,274 @@ export default function Subscribe() {
 
   if (carregando) {
     return (
-      <IonPage>
-        <IonContent className="ion-padding ion-text-center">
-          <IonSpinner />
-        </IonContent>
-      </IonPage>
+      <PublicLayout>
+        <Loading />
+      </PublicLayout>
     )
   }
 
   if (!trip) {
     return (
-      <IonPage>
-        <IonContent className="ion-padding">
-          <IonText>
-            <h2>Viagem não encontrada</h2>
-            <p>O link pode estar incorreto ou a viagem ainda não foi publicada.</p>
-          </IonText>
-        </IonContent>
-      </IonPage>
+      <PublicLayout>
+        <Card>
+          <CardBody className="py-12 text-center">
+            <h1 className="text-xl font-semibold">Viagem não encontrada</h1>
+          </CardBody>
+        </Card>
+      </PublicLayout>
     )
   }
 
-  // --- Confirmação da inscrição ---------------------------------------------
+  /* ------------------------------------------------ Confirmação */
   if (resultado) {
     return (
-      <IonPage>
-        <IonHeader>
-          <IonToolbar color="success">
-            <IonTitle>Inscrição confirmada</IonTitle>
-          </IonToolbar>
-        </IonHeader>
-        <IonContent className="ion-padding">
-          <IonCard>
-            <IonCardHeader>
-              <IonCardSubtitle>{resultado.trip}</IonCardSubtitle>
-              <IonCardTitle>Tudo certo, {resultado.name.split(' ')[0]}!</IonCardTitle>
-            </IonCardHeader>
-            <IonCardContent>
-              <p>
-                Valor total: <strong>{brl(resultado.total_amount)}</strong>
-              </p>
+      <PublicLayout>
+        <Card>
+          <CardBody className="space-y-6">
+            <div className="text-center">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                <Check className="h-7 w-7" />
+              </div>
+              <h1 className="text-2xl font-semibold">
+                Inscrição confirmada, {resultado.name.split(' ')[0]}!
+              </h1>
+              <p className="mt-2 text-ink-muted">{resultado.trip}</p>
+            </div>
 
-              {resultado.installments.length > 0 && (
-                <IonList>
-                  <IonListHeader>
-                    <IonLabel>
-                      {resultado.installments.length === 1
-                        ? 'Pagamento à vista'
-                        : `${resultado.installments.length} parcelas`}
-                    </IonLabel>
-                  </IonListHeader>
+            <div className="rounded-card border border-line bg-canvas p-5 text-center">
+              <div className="text-sm text-ink-muted">Valor total</div>
+              <div className="mt-1 text-3xl font-semibold tabular-nums text-brand-600">
+                {brl(resultado.total_amount)}
+              </div>
+            </div>
+
+            {resultado.installments.length > 0 && (
+              <div>
+                <h2 className="mb-2 font-semibold">
+                  {resultado.installments.length === 1
+                    ? 'Pagamento à vista'
+                    : `Em ${resultado.installments.length} parcelas`}
+                </h2>
+                <ul className="divide-y divide-line rounded-lg border border-line">
                   {resultado.installments.map((p, i) => (
-                    <IonItem key={p.due_date + i}>
-                      <IonLabel>
+                    <li
+                      key={`${p.due_date}-${i}`}
+                      className="flex items-center justify-between px-4 py-3 text-[15px]"
+                    >
+                      <span className="text-ink-soft">
                         {resultado.installments.length > 1 ? `${i + 1}ª parcela` : 'Valor'}
-                      </IonLabel>
-                      <IonNote slot="end">
-                        {brl(p.amount)} · vence {data(p.due_date)}
-                      </IonNote>
-                    </IonItem>
+                      </span>
+                      <span className="text-right">
+                        <span className="font-medium tabular-nums">{brl(p.amount)}</span>
+                        <span className="ml-2 text-sm text-ink-muted">
+                          vence {formatDate(p.due_date)}
+                        </span>
+                      </span>
+                    </li>
                   ))}
-                </IonList>
-              )}
+                </ul>
+              </div>
+            )}
 
-              {resultado.requirements.length > 0 && (
-                <IonList>
-                  <IonListHeader>
-                    <IonLabel>O que você precisa entregar</IonLabel>
-                  </IonListHeader>
+            {resultado.requirements.length > 0 && (
+              <div>
+                <h2 className="mb-2 flex items-center gap-2 font-semibold">
+                  <Doc className="h-4 w-4 text-brand-600" />
+                  O que você precisa entregar
+                </h2>
+                <ul className="space-y-2 rounded-lg border border-line bg-canvas p-4">
                   {resultado.requirements.map((r) => (
-                    <IonItem key={r}>
-                      <IonLabel className="ion-text-wrap">{r}</IonLabel>
-                    </IonItem>
+                    <li key={r} className="flex items-start gap-2.5 text-[15px]">
+                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-500" />
+                      {r}
+                    </li>
                   ))}
-                </IonList>
-              )}
+                </ul>
+              </div>
+            )}
 
-              <IonNote>
-                O organizador entrará em contato com as instruções de pagamento.
-              </IonNote>
-            </IonCardContent>
-          </IonCard>
-        </IonContent>
-      </IonPage>
+            <Link to={`/trip/${slug}/pagamento`}>
+              <Button block size="lg">
+                Ver como pagar
+              </Button>
+            </Link>
+          </CardBody>
+        </Card>
+      </PublicLayout>
     )
   }
 
-  // --- Formulário de inscrição ----------------------------------------------
+  /* ------------------------------------------------ Formulário */
   return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar color="primary">
-          <IonButtons slot="start">
-            <IonBackButton defaultHref={`/trip/${slug}`} />
-          </IonButtons>
-          <IonTitle>Inscrição</IonTitle>
-        </IonToolbar>
-      </IonHeader>
+    <PublicLayout>
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold">Inscrição</h1>
+        <p className="mt-1 text-ink-muted">
+          {trip.name} · {trip.destination}
+          {trip.spots_left !== null && ` · ${trip.spots_left} vaga(s)`}
+        </p>
+      </div>
 
-      <IonContent className="ion-padding">
-        <IonText>
-          <h2>{trip.name}</h2>
-          <p>
-            {trip.destination}
-            {trip.spots_left !== null && ` · ${trip.spots_left} vaga(s) restante(s)`}
-          </p>
-        </IonText>
+      {erro && (
+        <div className="mb-5">
+          <Alert>{erro}</Alert>
+        </div>
+      )}
 
-        {erro && (
-          <IonText color="danger">
-            <p>{erro}</p>
-          </IonText>
-        )}
+      <form onSubmit={enviar} className="space-y-5">
+        <Card>
+          <CardHeader title="Seus dados" />
+          <CardBody className="space-y-4">
+            <Field label="Nome completo" required>
+              <Input value={nome} onChange={(e) => setNome(e.target.value)} required />
+            </Field>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="E-mail">
+                <Input
+                  type="email"
+                  placeholder="voce@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </Field>
+              <Field label="Telefone / WhatsApp">
+                <Input
+                  type="tel"
+                  placeholder="(11) 99999-9999"
+                  value={telefone}
+                  onChange={(e) => setTelefone(e.target.value)}
+                />
+              </Field>
+              <Field label="CPF ou RG">
+                <Input value={documento} onChange={(e) => setDocumento(e.target.value)} />
+              </Field>
+              <Field label="Data de nascimento">
+                <Input
+                  type="date"
+                  value={nascimento}
+                  onChange={(e) => setNascimento(e.target.value)}
+                />
+              </Field>
+            </div>
+          </CardBody>
+        </Card>
 
-        <form onSubmit={enviar}>
-          <IonList inset>
-            <IonListHeader>
-              <IonLabel>Seus dados</IonLabel>
-            </IonListHeader>
-            <IonItem>
-              <IonInput
-                label="Nome completo"
-                labelPlacement="floating"
-                value={name}
-                onIonInput={(e) => setName(e.detail.value ?? '')}
-                required
-              />
-            </IonItem>
-            <IonItem>
-              <IonInput
-                type="email"
-                label="E-mail"
-                labelPlacement="floating"
-                value={email}
-                onIonInput={(e) => setEmail(e.detail.value ?? '')}
-              />
-            </IonItem>
-            <IonItem>
-              <IonInput
-                type="tel"
-                label="Telefone / WhatsApp"
-                labelPlacement="floating"
-                value={phone}
-                onIonInput={(e) => setPhone(e.detail.value ?? '')}
-              />
-            </IonItem>
-            <IonItem>
-              <IonInput
-                label="CPF ou RG"
-                labelPlacement="floating"
-                value={document}
-                onIonInput={(e) => setDocument(e.detail.value ?? '')}
-              />
-            </IonItem>
-            <IonItem>
-              <IonInput
-                type="date"
-                label="Data de nascimento"
-                labelPlacement="floating"
-                value={birthDate}
-                onIonInput={(e) => setBirthDate(e.detail.value ?? '')}
-              />
-            </IonItem>
-          </IonList>
-
-          <IonList inset>
-            <IonItem>
-              <IonToggle checked={isMinor} onIonChange={(e) => setIsMinor(e.detail.checked)}>
-                Sou menor de 18 anos
-              </IonToggle>
-            </IonItem>
-            {isMinor && (
-              <>
-                <IonItem>
-                  <IonInput
-                    label="Nome do responsável"
-                    labelPlacement="floating"
-                    value={guardianName}
-                    onIonInput={(e) => setGuardianName(e.detail.value ?? '')}
-                    required
+        <Card>
+          <CardBody className="space-y-4">
+            <Toggle checked={menor} onChange={setMenor} label="Sou menor de 18 anos" />
+            {menor && (
+              <div className="space-y-4 rounded-lg border border-amber-200 bg-amber-50/60 p-4">
+                <p className="text-sm text-amber-900">
+                  Menores precisam entregar a autorização assinada pelo responsável.
+                </p>
+                <Field label="Nome do responsável" required>
+                  <Input
+                    value={responsavel}
+                    onChange={(e) => setResponsavel(e.target.value)}
+                    required={menor}
                   />
-                </IonItem>
-                <IonItem>
-                  <IonInput
+                </Field>
+                <Field label="Telefone do responsável">
+                  <Input
                     type="tel"
-                    label="Telefone do responsável"
-                    labelPlacement="floating"
-                    value={guardianPhone}
-                    onIonInput={(e) => setGuardianPhone(e.detail.value ?? '')}
+                    value={telResponsavel}
+                    onChange={(e) => setTelResponsavel(e.target.value)}
                   />
-                </IonItem>
-                <IonItem lines="none">
-                  <IonNote className="ion-text-wrap">
-                    Menores precisam entregar a autorização assinada pelo responsável.
-                  </IonNote>
-                </IonItem>
-              </>
+                </Field>
+              </div>
             )}
-          </IonList>
+          </CardBody>
+        </Card>
 
-          <IonList inset>
-            <IonListHeader>
-              <IonLabel>Saúde e logística</IonLabel>
-            </IonListHeader>
-            <IonItem>
-              <IonInput
-                label="Contato de emergência"
-                labelPlacement="floating"
-                value={emergencyContact}
-                onIonInput={(e) => setEmergencyContact(e.detail.value ?? '')}
-              />
-            </IonItem>
-            <IonItem>
-              <IonInput
-                label="Plano de saúde"
-                labelPlacement="floating"
-                value={healthInsurance}
-                onIonInput={(e) => setHealthInsurance(e.detail.value ?? '')}
-              />
-            </IonItem>
-            <IonItem>
-              <IonInput
-                label="Restrição alimentar"
-                labelPlacement="floating"
-                placeholder="Ex.: intolerância a lactose"
-                value={dietary}
-                onIonInput={(e) => setDietary(e.detail.value ?? '')}
-              />
-            </IonItem>
-            <IonItem>
-              <IonTextarea
-                label="Medicamentos / observações médicas"
-                labelPlacement="floating"
-                autoGrow
-                value={medical}
-                onIonInput={(e) => setMedical(e.detail.value ?? '')}
-              />
-            </IonItem>
-            <IonItem>
-              <IonSelect
-                label="Tamanho de camiseta"
-                value={shirtSize}
-                onIonChange={(e) => setShirtSize(e.detail.value)}
-              >
-                {TAMANHOS.map((t) => (
-                  <IonSelectOption key={t} value={t}>
-                    {t}
-                  </IonSelectOption>
-                ))}
-              </IonSelect>
-            </IonItem>
-            <IonItem>
-              <IonInput
-                label="Ponto de embarque"
-                labelPlacement="floating"
-                value={boardingPoint}
-                onIonInput={(e) => setBoardingPoint(e.detail.value ?? '')}
-              />
-            </IonItem>
-          </IonList>
+        <Card>
+          <CardHeader
+            title="Saúde e logística"
+            subtitle="Ajuda quem organiza a cuidar melhor de você na viagem."
+          />
+          <CardBody className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Contato de emergência">
+                <Input
+                  placeholder="Nome e telefone"
+                  value={emergencia}
+                  onChange={(e) => setEmergencia(e.target.value)}
+                />
+              </Field>
+              <Field label="Plano de saúde">
+                <Input value={plano} onChange={(e) => setPlano(e.target.value)} />
+              </Field>
+              <Field label="Restrição alimentar">
+                <Input
+                  placeholder="Ex.: intolerância a lactose"
+                  value={restricao}
+                  onChange={(e) => setRestricao(e.target.value)}
+                />
+              </Field>
+              <Field label="Tamanho de camiseta">
+                <Select value={camiseta} onChange={(e) => setCamiseta(e.target.value)}>
+                  <option value="">Selecione</option>
+                  {TAMANHOS.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            </div>
+            <Field label="Medicamentos ou observações médicas">
+              <Textarea value={medico} onChange={(e) => setMedico(e.target.value)} />
+            </Field>
+            <Field label="Ponto de embarque">
+              <Input value={embarque} onChange={(e) => setEmbarque(e.target.value)} />
+            </Field>
+          </CardBody>
+        </Card>
 
-          <IonList inset>
-            <IonListHeader>
-              <IonLabel>Pagamento</IonLabel>
-            </IonListHeader>
-            <IonItem>
-              <IonSelect
-                label="Dividir em"
-                value={installments}
-                onIonChange={(e) => setInstallments(Number(e.detail.value))}
+        <Card>
+          <CardHeader title="Pagamento" />
+          <CardBody className="space-y-4">
+            <Field
+              label="Como você quer pagar?"
+              hint="As parcelas vencem a cada 30 dias, a partir de hoje."
+            >
+              <Select
+                value={parcelas}
+                onChange={(e) => setParcelas(Number(e.target.value))}
               >
                 {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
-                  <IonSelectOption key={n} value={n}>
-                    {n === 1 ? 'À vista' : `${n}x`}
-                  </IonSelectOption>
+                  <option key={n} value={n}>
+                    {n === 1 ? 'À vista' : `Em ${n}x`}
+                  </option>
                 ))}
-              </IonSelect>
-            </IonItem>
-            <IonItem>
-              <IonTextarea
-                label="Observações para o organizador"
-                labelPlacement="floating"
-                autoGrow
-                value={notes}
-                onIonInput={(e) => setNotes(e.detail.value ?? '')}
-              />
-            </IonItem>
-          </IonList>
+              </Select>
+            </Field>
+            <Field label="Observações para quem organiza">
+              <Textarea value={obs} onChange={(e) => setObs(e.target.value)} />
+            </Field>
+          </CardBody>
+        </Card>
 
-          <IonList inset>
-            <IonItem lines="none">
-              <IonCheckbox
-                checked={consent}
-                onIonChange={(e) => setConsent(e.detail.checked)}
-                labelPlacement="end"
-                justify="start"
-              >
-                <span className="ion-text-wrap">
-                  Autorizo o uso dos meus dados para a organização desta viagem.
-                </span>
-              </IonCheckbox>
-            </IonItem>
-          </IonList>
+        <Card>
+          <CardBody>
+            <Checkbox
+              checked={aceite}
+              onChange={setAceite}
+              label="Autorizo o uso dos meus dados para a organização desta viagem."
+              description="Seus dados são usados apenas por quem organiza, para esta viagem."
+            />
+          </CardBody>
+        </Card>
 
-          <IonButton
-            type="submit"
-            expand="block"
-            disabled={enviando || !consent || name.trim().length < 2}
-          >
-            {enviando ? 'Enviando…' : 'Confirmar inscrição'}
-          </IonButton>
-        </form>
-      </IonContent>
-    </IonPage>
+        <Button
+          type="submit"
+          block
+          size="lg"
+          loading={enviando}
+          disabled={!aceite || nome.trim().length < 2}
+        >
+          {enviando ? 'Enviando…' : 'Confirmar inscrição'}
+        </Button>
+      </form>
+    </PublicLayout>
   )
 }

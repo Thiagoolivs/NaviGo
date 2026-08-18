@@ -1,3 +1,4 @@
+import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -6,11 +7,12 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
   plugins: [
     react(),
+    tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'NaviGo',
+        name: 'NaviGo — Viagens em grupo',
         short_name: 'NaviGo',
         description: 'Organize viagens em grupo — do planejamento ao pós-viagem.',
         lang: 'pt-BR',

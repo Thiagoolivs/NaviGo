@@ -1,22 +1,9 @@
-import {
-  IonBackButton,
-  IonButton,
-  IonButtons,
-  IonContent,
-  IonHeader,
-  IonItem,
-  IonLabel,
-  IonList,
-  IonNote,
-  IonPage,
-  IonSpinner,
-  IonText,
-  IonTitle,
-  IonToolbar,
-} from '@ionic/react'
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router'
+import { useParams } from 'react-router-dom'
 
+import { PublicLayout } from '../components/Layout'
+import { Copy } from '../components/icons'
+import { Alert, Button, Card, CardBody, Loading } from '../components/ui'
 import { type TripPaymentInfo, getTripPayment } from '../lib/api/pix'
 
 export default function TripPayment() {
@@ -39,86 +26,99 @@ export default function TripPayment() {
     setTimeout(() => setCopiado(false), 2500)
   }
 
-  return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar color="primary">
-          <IonButtons slot="start">
-            <IonBackButton defaultHref={`/trip/${slug}`} />
-          </IonButtons>
-          <IonTitle>Pagamento</IonTitle>
-        </IonToolbar>
-      </IonHeader>
+  if (carregando) {
+    return (
+      <PublicLayout>
+        <Loading />
+      </PublicLayout>
+    )
+  }
 
-      <IonContent className="ion-padding">
-        {carregando ? (
-          <div className="ion-text-center">
-            <IonSpinner />
-          </div>
-        ) : !info ? (
-          <IonText>
-            <h2>Viagem não encontrada</h2>
-          </IonText>
-        ) : !info.has_pix_account ? (
-          <IonText>
-            <h2>Pagamento ainda não disponível</h2>
-            <p>
-              O organizador ainda não cadastrou a conta para recebimento. Entre em
-              contato com ele para combinar o pagamento.
+  if (!info) {
+    return (
+      <PublicLayout>
+        <Card>
+          <CardBody className="py-12 text-center">
+            <h1 className="text-xl font-semibold">Viagem não encontrada</h1>
+          </CardBody>
+        </Card>
+      </PublicLayout>
+    )
+  }
+
+  if (!info.has_pix_account) {
+    return (
+      <PublicLayout>
+        <Card>
+          <CardBody className="space-y-4 py-10 text-center">
+            <h1 className="text-xl font-semibold">Pagamento ainda não disponível</h1>
+            <p className="text-ink-muted">
+              Quem organiza ainda não cadastrou a conta para recebimento. Entre em
+              contato para combinar o pagamento.
             </p>
-          </IonText>
-        ) : (
-          <>
-            <IonText>
-              <h2>{info.trip}</h2>
-              <p>Pague pelo PIX usando o QR Code abaixo.</p>
-            </IonText>
+          </CardBody>
+        </Card>
+      </PublicLayout>
+    )
+  }
 
-            {info.qr_code && (
-              <div className="ion-text-center ion-margin-vertical">
+  return (
+    <PublicLayout>
+      <Card>
+        <CardBody className="space-y-6">
+          <div className="text-center">
+            <h1 className="text-xl font-semibold">Pagar com PIX</h1>
+            <p className="mt-1 text-ink-muted">{info.trip}</p>
+          </div>
+
+          {info.qr_code && (
+            <div className="flex justify-center">
+              <div className="rounded-card border border-line bg-white p-4">
                 <img
                   src={info.qr_code}
                   alt="QR Code para pagamento PIX"
-                  style={{ maxWidth: 260, width: '100%' }}
+                  className="h-56 w-56"
                 />
               </div>
+            </div>
+          )}
+
+          <div className="divide-y divide-line rounded-lg border border-line">
+            {info.pix_owner_name && (
+              <div className="flex justify-between gap-4 px-4 py-3 text-[15px]">
+                <span className="text-ink-muted">Favorecido</span>
+                <span className="text-right font-medium">{info.pix_owner_name}</span>
+              </div>
             )}
-
-            <IonList inset>
-              {info.pix_owner_name && (
-                <IonItem>
-                  <IonLabel>Favorecido</IonLabel>
-                  <IonNote slot="end">{info.pix_owner_name}</IonNote>
-                </IonItem>
-              )}
-              {info.pix_bank && (
-                <IonItem>
-                  <IonLabel>Instituição</IonLabel>
-                  <IonNote slot="end">{info.pix_bank}</IonNote>
-                </IonItem>
-              )}
-              {info.pix_key && (
-                <IonItem lines="none">
-                  <IonLabel className="ion-text-wrap">
-                    Chave PIX
-                    <p>{info.pix_key}</p>
-                  </IonLabel>
-                </IonItem>
-              )}
-            </IonList>
-
-            {info.pix_payload && (
-              <IonButton expand="block" fill="outline" onClick={copiar}>
-                {copiado ? 'Código copiado!' : 'Copiar código PIX'}
-              </IonButton>
+            {info.pix_bank && (
+              <div className="flex justify-between gap-4 px-4 py-3 text-[15px]">
+                <span className="text-ink-muted">Instituição</span>
+                <span className="text-right font-medium">{info.pix_bank}</span>
+              </div>
             )}
+            {info.pix_key && (
+              <div className="flex justify-between gap-4 px-4 py-3 text-[15px]">
+                <span className="shrink-0 text-ink-muted">Chave PIX</span>
+                <span className="min-w-0 break-all text-right font-medium">
+                  {info.pix_key}
+                </span>
+              </div>
+            )}
+          </div>
 
-            <IonNote className="ion-padding-start">
-              Após pagar, envie o comprovante ao organizador para que ele dê baixa.
-            </IonNote>
-          </>
-        )}
-      </IonContent>
-    </IonPage>
+          {info.pix_payload && (
+            <Button variant="secondary" block size="lg" onClick={copiar}>
+              <Copy className="h-4 w-4" />
+              {copiado ? 'Código copiado!' : 'Copiar código PIX'}
+            </Button>
+          )}
+
+          <Alert tone="brand" title="Depois de pagar">
+            Envie o comprovante para quem organiza a viagem, para que o pagamento seja
+            registrado.
+          </Alert>
+        </CardBody>
+      </Card>
+    </PublicLayout>
   )
 }

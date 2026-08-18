@@ -1,62 +1,48 @@
-import {
-  IonBackButton,
-  IonButton,
-  IonButtons,
-  IonCard,
-  IonCardContent,
-  IonCardHeader,
-  IonCardSubtitle,
-  IonCardTitle,
-  IonContent,
-  IonHeader,
-  IonInput,
-  IonItem,
-  IonLabel,
-  IonList,
-  IonListHeader,
-  IonNote,
-  IonPage,
-  IonProgressBar,
-  IonSelect,
-  IonSelectOption,
-  IonSpinner,
-  IonText,
-  IonTitle,
-  IonToggle,
-  IonToolbar,
-  useIonRouter,
-} from '@ionic/react'
 import { useState } from 'react'
+import { useHistory } from 'react-router-dom'
 
+import { AppLayout, PageHeader, Steps } from '../components/Layout'
+import { ArrowRight, Check, Sparkles } from '../components/icons'
+import {
+  Alert,
+  Button,
+  Card,
+  CardBody,
+  Field,
+  Input,
+  Select,
+  Spinner,
+  Toggle,
+} from '../components/ui'
 import { ApiError } from '../lib/api/client'
 import {
   type AssistantResult,
-  type NewTripInput,
   TRIP_TYPES,
   type TripType,
   createTrip,
   runAssistant,
 } from '../lib/api/trips'
 
-/** Perguntas do assistente — moldam a estrutura da viagem. */
 const PERGUNTAS = [
   { chave: 'has_lodging', texto: 'Haverá hospedagem?' },
-  { chave: 'has_meals', texto: 'Haverá alimentação?' },
+  { chave: 'has_meals', texto: 'Haverá alimentação inclusa?' },
   { chave: 'has_chartered_transport', texto: 'O transporte será fretado?' },
-  { chave: 'has_rooms', texto: 'Haverá divisão de quartos?' },
-  { chave: 'has_groups', texto: 'Haverá divisão em grupos?' },
+  { chave: 'has_rooms', texto: 'Vai dividir quartos?' },
+  { chave: 'has_groups', texto: 'Vai dividir o grupo em equipes?' },
   { chave: 'has_capacity_limit', texto: 'Existe limite de vagas?' },
 ] as const
 
 type Respostas = Record<(typeof PERGUNTAS)[number]['chave'], boolean>
 
+const ETAPAS = ['Sobre a viagem', 'Assistente', 'Pronto']
+
 export default function NewTrip() {
-  const router = useIonRouter()
-  const [etapa, setEtapa] = useState<1 | 2 | 3>(1)
+  const history = useHistory()
+  const [etapa, setEtapa] = useState(0)
   const [erro, setErro] = useState<string | null>(null)
+  const [aviso, setAviso] = useState<string | null>(null)
   const [salvando, setSalvando] = useState(false)
 
-  // etapa 1
   const [name, setName] = useState('')
   const [destination, setDestination] = useState('')
   const [type, setType] = useState<TripType>('church')
@@ -64,7 +50,6 @@ export default function NewTrip() {
   const [durationDays, setDurationDays] = useState('')
   const [capacity, setCapacity] = useState('')
 
-  // etapa 2
   const [respostas, setRespostas] = useState<Respostas>({
     has_lodging: false,
     has_meals: false,
@@ -75,18 +60,18 @@ export default function NewTrip() {
   })
   const [margem, setMargem] = useState('10')
 
-  // etapa 3
   const [resultado, setResultado] = useState<AssistantResult | null>(null)
   const [tripId, setTripId] = useState<number | null>(null)
 
-  const etapa1Valida = name.trim().length > 1 && destination.trim().length > 1
+  const podeAvancar = name.trim().length > 1 && destination.trim().length > 1
 
   async function concluir() {
     setErro(null)
+    setAviso(null)
     setSalvando(true)
-    setEtapa(3)
+    setEtapa(2)
     try {
-      const input: NewTripInput = {
+      const trip = await createTrip({
         name: name.trim(),
         destination: destination.trim(),
         type,
@@ -94,205 +79,228 @@ export default function NewTrip() {
         duration_days: durationDays ? Number(durationDays) : null,
         capacity: capacity ? Number(capacity) : null,
         config: { ...respostas, safety_margin_percent: margem || '0' },
-      }
-      const trip = await createTrip(input)
+      })
       setTripId(trip.id)
 
       // O assistente é um bônus: se a IA falhar, a viagem já está criada.
       try {
         setResultado(await runAssistant(trip.id))
       } catch (e) {
-        setErro(
+        setAviso(
           e instanceof ApiError && e.status === 503
-            ? 'A viagem foi criada, mas o assistente está indisponível (configure GEMINI_API_KEY).'
+            ? 'A viagem foi criada, mas o assistente está indisponível no momento. Você pode montar o checklist manualmente.'
             : 'A viagem foi criada, mas não consegui gerar o checklist agora.',
         )
       }
     } catch (e) {
       setErro(e instanceof ApiError ? e.firstMessage : 'Não foi possível criar a viagem.')
-      setEtapa(2)
+      setEtapa(1)
     } finally {
       setSalvando(false)
     }
   }
 
   return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar color="primary">
-          <IonButtons slot="start">
-            <IonBackButton defaultHref="/" />
-          </IonButtons>
-          <IonTitle>Nova viagem</IonTitle>
-        </IonToolbar>
-        <IonProgressBar value={etapa / 3} />
-      </IonHeader>
+    <AppLayout>
+      <PageHeader title="Nova viagem" backTo="/app" />
+      <Steps steps={ETAPAS} current={etapa} />
 
-      <IonContent className="ion-padding">
-        {erro && (
-          <IonText color={tripId ? 'warning' : 'danger'}>
-            <p>{erro}</p>
-          </IonText>
-        )}
+      {erro && (
+        <div className="mb-5">
+          <Alert>{erro}</Alert>
+        </div>
+      )}
 
-        {etapa === 1 && (
-          <>
-            <IonText>
-              <h2>Sobre a viagem</h2>
-              <p>Comece com o básico — o assistente cuida do resto.</p>
-            </IonText>
-            <IonList inset>
-              <IonItem>
-                <IonInput
-                  label="Nome da viagem"
-                  labelPlacement="floating"
-                  placeholder="Retiro de Carnaval"
-                  value={name}
-                  onIonInput={(e) => setName(e.detail.value ?? '')}
-                />
-              </IonItem>
-              <IonItem>
-                <IonInput
-                  label="Destino"
-                  labelPlacement="floating"
-                  placeholder="Campos do Jordão"
-                  value={destination}
-                  onIonInput={(e) => setDestination(e.detail.value ?? '')}
-                />
-              </IonItem>
-              <IonItem>
-                <IonSelect
-                  label="Tipo"
-                  labelPlacement="floating"
-                  value={type}
-                  onIonChange={(e) => setType(e.detail.value)}
-                >
-                  {TRIP_TYPES.map((o) => (
-                    <IonSelectOption key={o.value} value={o.value}>
-                      {o.label}
-                    </IonSelectOption>
-                  ))}
-                </IonSelect>
-              </IonItem>
-              <IonItem>
-                <IonInput
+      {/* Etapa 1 — dados básicos */}
+      {etapa === 0 && (
+        <Card>
+          <CardBody className="space-y-5">
+            <div>
+              <h2 className="text-lg font-semibold">Sobre a viagem</h2>
+              <p className="mt-1 text-sm text-ink-muted">
+                Só o básico por enquanto — dá para ajustar depois.
+              </p>
+            </div>
+
+            <Field label="Nome da viagem" required>
+              <Input
+                placeholder="Ex.: Retiro de Carnaval 2026"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </Field>
+
+            <Field label="Destino" required>
+              <Input
+                placeholder="Ex.: Campos do Jordão, SP"
+                value={destination}
+                onChange={(e) => setDestination(e.target.value)}
+              />
+            </Field>
+
+            <Field label="Tipo de viagem" hint="Define os documentos que serão exigidos.">
+              <Select value={type} onChange={(e) => setType(e.target.value as TripType)}>
+                {TRIP_TYPES.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              <Field label="Data de início">
+                <Input
                   type="date"
-                  label="Data de início"
-                  labelPlacement="floating"
                   value={startDate}
-                  onIonInput={(e) => setStartDate(e.detail.value ?? '')}
+                  onChange={(e) => setStartDate(e.target.value)}
                 />
-              </IonItem>
-              <IonItem>
-                <IonInput
+              </Field>
+              <Field label="Duração (dias)">
+                <Input
                   type="number"
-                  label="Duração (dias)"
-                  labelPlacement="floating"
+                  min={1}
+                  placeholder="3"
                   value={durationDays}
-                  onIonInput={(e) => setDurationDays(e.detail.value ?? '')}
+                  onChange={(e) => setDurationDays(e.target.value)}
                 />
-              </IonItem>
-              <IonItem>
-                <IonInput
+              </Field>
+              <Field label="Vagas">
+                <Input
                   type="number"
-                  label="Quantidade de participantes"
-                  labelPlacement="floating"
+                  min={1}
+                  placeholder="40"
                   value={capacity}
-                  onIonInput={(e) => setCapacity(e.detail.value ?? '')}
+                  onChange={(e) => setCapacity(e.target.value)}
                 />
-              </IonItem>
-            </IonList>
-            <IonButton expand="block" disabled={!etapa1Valida} onClick={() => setEtapa(2)}>
-              Continuar
-            </IonButton>
-          </>
-        )}
+              </Field>
+            </div>
 
-        {etapa === 2 && (
-          <>
-            <IonText>
-              <h2>Assistente</h2>
-              <p>Responda e eu monto a estrutura e o checklist da viagem.</p>
-            </IonText>
-            <IonList inset>
-              {PERGUNTAS.map((p) => (
-                <IonItem key={p.chave}>
-                  <IonToggle
-                    checked={respostas[p.chave]}
-                    onIonChange={(e) =>
-                      setRespostas((r) => ({ ...r, [p.chave]: e.detail.checked }))
-                    }
-                  >
-                    {p.texto}
-                  </IonToggle>
-                </IonItem>
-              ))}
-              <IonItem>
-                <IonInput
-                  type="number"
-                  label="Margem de segurança (%)"
-                  labelPlacement="floating"
-                  value={margem}
-                  onIonInput={(e) => setMargem(e.detail.value ?? '0')}
-                />
-              </IonItem>
-            </IonList>
-            <IonNote className="ion-padding-start">
-              A margem é somada ao valor por participante.
-            </IonNote>
-            <IonButton expand="block" disabled={salvando} onClick={concluir}>
-              Criar viagem com o assistente
-            </IonButton>
-            <IonButton expand="block" fill="clear" onClick={() => setEtapa(1)}>
-              Voltar
-            </IonButton>
-          </>
-        )}
+            <div className="flex justify-end pt-1">
+              <Button disabled={!podeAvancar} onClick={() => setEtapa(1)}>
+                Continuar <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardBody>
+        </Card>
+      )}
 
-        {etapa === 3 && (
-          <>
-            {salvando && (
-              <div className="ion-text-center ion-padding">
-                <IonSpinner />
-                <IonText>
-                  <p>Montando a estrutura da viagem…</p>
-                </IonText>
+      {/* Etapa 2 — perguntas do assistente */}
+      {etapa === 1 && (
+        <Card>
+          <CardBody className="space-y-5">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+                <Sparkles />
               </div>
-            )}
+              <div>
+                <h2 className="text-lg font-semibold">Assistente</h2>
+                <p className="mt-1 text-sm text-ink-muted">
+                  Responda e eu monto a estrutura e o checklist da viagem.
+                </p>
+              </div>
+            </div>
 
-            {!salvando && resultado && (
-              <IonCard>
-                <IonCardHeader>
-                  <IonCardSubtitle>Assistente</IonCardSubtitle>
-                  <IonCardTitle>Checklist criado</IonCardTitle>
-                </IonCardHeader>
-                <IonCardContent>
-                  {resultado.notes && <p>{resultado.notes}</p>}
-                  <IonList>
-                    <IonListHeader>
-                      <IonLabel>{resultado.tasks_created} tarefa(s)</IonLabel>
-                    </IonListHeader>
-                    {resultado.checklist.map((item) => (
-                      <IonItem key={item}>
-                        <IonLabel className="ion-text-wrap">{item}</IonLabel>
-                      </IonItem>
-                    ))}
-                  </IonList>
-                </IonCardContent>
-              </IonCard>
-            )}
+            <div className="divide-y divide-line rounded-lg border border-line px-4">
+              {PERGUNTAS.map((p) => (
+                <div key={p.chave} className="py-3">
+                  <Toggle
+                    label={p.texto}
+                    checked={respostas[p.chave]}
+                    onChange={(v) => setRespostas((r) => ({ ...r, [p.chave]: v }))}
+                  />
+                </div>
+              ))}
+            </div>
 
-            {!salvando && tripId && (
-              <IonButton
-                expand="block"
-                onClick={() => router.push(`/trips/${tripId}`, 'root', 'replace')}
-              >
-                Abrir a viagem
-              </IonButton>
+            <Field
+              label="Margem de segurança (%)"
+              hint="Uma folga somada ao valor por participante, para imprevistos."
+            >
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                value={margem}
+                onChange={(e) => setMargem(e.target.value)}
+              />
+            </Field>
+
+            <div className="flex justify-between pt-1">
+              <Button variant="ghost" onClick={() => setEtapa(0)}>
+                Voltar
+              </Button>
+              <Button onClick={concluir} loading={salvando}>
+                Criar viagem
+              </Button>
+            </div>
+          </CardBody>
+        </Card>
+      )}
+
+      {/* Etapa 3 — resultado */}
+      {etapa === 2 && (
+        <Card>
+          <CardBody>
+            {salvando ? (
+              <div className="flex flex-col items-center gap-3 py-14 text-center">
+                <Spinner className="h-8 w-8 text-brand-600" />
+                <p className="font-medium">Montando a estrutura da viagem…</p>
+                <p className="text-sm text-ink-muted">Isso leva alguns segundos.</p>
+              </div>
+            ) : (
+              <>
+                <div className="flex flex-col items-center py-4 text-center">
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                    <Check className="h-6 w-6" />
+                  </div>
+                  <h2 className="text-xl font-semibold">Viagem criada!</h2>
+                  <p className="mt-1.5 text-ink-muted">
+                    {resultado
+                      ? `O assistente preparou ${resultado.tasks_created} tarefa(s) para você.`
+                      : 'Agora é só lançar os custos e publicar.'}
+                  </p>
+                </div>
+
+                {aviso && (
+                  <div className="mb-5">
+                    <Alert tone="warning">{aviso}</Alert>
+                  </div>
+                )}
+
+                {resultado && resultado.checklist.length > 0 && (
+                  <div className="rounded-lg border border-line bg-canvas p-4">
+                    {resultado.notes && (
+                      <p className="mb-3 text-sm text-ink-soft">{resultado.notes}</p>
+                    )}
+                    <ul className="space-y-2">
+                      {resultado.checklist.map((item) => (
+                        <li key={item} className="flex items-start gap-2.5 text-[15px]">
+                          <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-700">
+                            <Check className="h-3 w-3" />
+                          </span>
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {tripId && (
+                  <Button
+                    block
+                    size="lg"
+                    className="mt-6"
+                    onClick={() => history.replace(`/app/viagens/${tripId}`)}
+                  >
+                    Continuar: lançar os custos <ArrowRight className="h-4 w-4" />
+                  </Button>
+                )}
+              </>
             )}
-          </>
-        )}
-      </IonContent>
-    </IonPage>
+          </CardBody>
+        </Card>
+      )}
+    </AppLayout>
   )
 }
