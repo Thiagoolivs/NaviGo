@@ -195,6 +195,14 @@ export default function TripDetail() {
                   {trip.status === 'published' && (
                     <IonNote>Link público: /trip/{trip.slug}</IonNote>
                   )}
+                  <IonButton
+                    expand="block"
+                    fill="outline"
+                    className="ion-margin-top"
+                    routerLink={`/trips/${tripId}/roster`}
+                  >
+                    Participantes e pagamentos
+                  </IonButton>
                 </IonCardContent>
               </IonCard>
             )}

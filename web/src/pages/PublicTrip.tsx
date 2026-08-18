@@ -3,7 +3,6 @@ import {
   IonChip,
   IonContent,
   IonHeader,
-  IonNote,
   IonPage,
   IonSpinner,
   IonText,
@@ -77,12 +76,14 @@ export default function PublicTripPage() {
                 </IonChip>
               )}
             </div>
-            <IonButton expand="block" className="ion-margin-top" disabled>
-              Inscrever-se (em breve)
+            <IonButton
+              expand="block"
+              className="ion-margin-top"
+              routerLink={`/trip/${slug}/subscribe`}
+              disabled={trip.spots_left === 0}
+            >
+              {trip.spots_left === 0 ? 'Vagas esgotadas' : 'Quero me inscrever'}
             </IonButton>
-            <IonNote className="ion-padding-start">
-              A inscrição e o pagamento por PIX entram na próxima etapa.
-            </IonNote>
           </>
         )}
       </IonContent>

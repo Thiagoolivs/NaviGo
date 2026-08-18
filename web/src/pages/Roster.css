@@ -1,0 +1,52 @@
+/* Painel de gestão — cartões de resumo e lista de participantes. */
+
+.resumo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px;
+  padding: 8px 12px 0;
+}
+
+.resumo-card {
+  background: var(--ion-color-light, #f4f5f8);
+  border-radius: 10px;
+  padding: 10px 12px;
+  text-align: center;
+}
+
+.resumo-valor {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.resumo-valor.ion-color-success { color: var(--ion-color-success); }
+.resumo-valor.ion-color-warning { color: var(--ion-color-warning-shade); }
+.resumo-valor.ion-color-danger { color: var(--ion-color-danger); }
+
+.resumo-rotulo {
+  font-size: 0.75rem;
+  color: var(--ion-color-medium);
+  margin-top: 2px;
+}
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 0 12px 8px;
+}
+
+.detalhe {
+  background: var(--ion-color-light, #f9f9f9);
+  padding-bottom: 8px;
+}
+
+.badge-inline {
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.obrigatorio {
+  color: var(--ion-color-danger);
+}

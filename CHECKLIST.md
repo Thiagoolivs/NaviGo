@@ -100,32 +100,33 @@ item é uma tarefa concreta. Marque `[x]` conforme concluir.
 
 ### 5. Página pública e convites
 - [x] 🔴 🖥️ Endpoint público da viagem por `slug` *(geração de convite/QR pendente)*
-- [x] 🔴 📱 Página pública com as informações da viagem *(inscrição pendente)*
+- [x] 🔴 📱 Página pública da viagem + botão de inscrição
 - [ ] 🔴 Geração de **QR Code** do convite (lib no back ou front)
-- [ ] 🔴 Formulário de inscrição do participante (dados + termos)
-- [ ] 🟡 Controle de limite de vagas (fecha ao lotar)
+- [x] 🔴 Formulário de inscrição do participante (dados, saúde, responsável, parcelas + aceite LGPD)
+- [x] 🟡 Controle de limite de vagas (fecha ao lotar — 409)
 - [ ] 🟢 Lista de espera quando esgotar
 
 ### 6. Participantes
-- [ ] 🔴 🖥️ API de participantes + status (inscrito, confirmado, cancelado)
-- [ ] 🔴 📱 Listagem e detalhe do participante
-- [ ] 🟡 Cadastro manual pelo organizador
-- [ ] 🟡 Campos personalizados (documento, contato de emergência, restrições)
+- [x] 🔴 🖥️ API de participantes + status (inscrito, confirmado, cancelado)
+- [x] 🔴 📱 Listagem e detalhe do participante (painel de gestão)
+- [x] 🟡 Cadastro manual pelo organizador (API + admin)
+- [x] 🟡 Campos personalizados (documento, emergência, restrições, saúde, camiseta, embarque)
+- [x] 🟡 **Requisitos por viagem** (autorização de menores, documentos, ficha médica) com modelos para igreja/escola
 - [ ] 🟢 Divisão em quartos/grupos
 
 ### 7. Pagamentos via PIX
 - [x] 🔴 🖥️ Integração com o PSP (**Asaas**) atrás de interface própria — *falta validar no sandbox*
-- [ ] 🔴 🖥️ Geração de **QR Code PIX** por parcela
+- [x] 🔴 🖥️ Geração de **QR Code PIX** por parcela *(endpoint pronto; falta validar no sandbox do Asaas)*
 - [ ] 🔴 🖥️ **Webhook** validado por assinatura e **idempotente** → baixa automática
-- [ ] 🔴 🖥️ Controle de parcelas (valor, vencimento, status)
-- [ ] 🔴 📱 Tela de pagamento do participante (QR + status) e painel de inadimplência
+- [x] 🔴 🖥️ Controle de parcelas (valor, vencimento, status) + **re-parcelamento** preservando o já pago
+- [x] 🔴 📱 Painel de inadimplência (pagos/parciais/a pagar/atrasados) *(tela de pagamento do participante pendente)*
 - [ ] 🟡 **Lembretes automáticos** de cobrança (tarefas Celery)
 - [ ] 🟡 Conciliação e tratamento de estorno/falha
 - [ ] 🟢 Comprovante/recibo de pagamento
 
 ### 8. Painel do organizador
-- [ ] 🔴 🖥️ Agregações (arrecadado vs. meta, vagas, inadimplência) via ORM
-- [ ] 🔴 📱 Dashboard: participantes, vagas restantes, pagamentos, tarefas
+- [x] 🔴 🖥️ Agregações (arrecadado vs. meta, vagas, inadimplência, pendências de documento)
+- [x] 🔴 📱 Dashboard: participantes, vagas restantes, pagamentos, tarefas
 - [ ] 🟡 Repositório de documentos da viagem
 - [ ] 🟢 Indicadores/gráficos financeiros básicos
 
