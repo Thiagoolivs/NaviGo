@@ -1,93 +1,82 @@
-import {
-  IonButton,
-  IonContent,
-  IonHeader,
-  IonInput,
-  IonItem,
-  IonList,
-  IonNote,
-  IonPage,
-  IonText,
-  IonTitle,
-  IonToolbar,
-  useIonRouter,
-} from '@ionic/react'
 import { type FormEvent, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useHistory } from 'react-router-dom'
 
+import { Logo } from '../components/Layout'
+import { Alert, Button, Card, Field, Input } from '../components/ui'
 import { ApiError, login } from '../lib/api/auth'
 
 export default function Login() {
-  const router = useIonRouter()
+  const history = useHistory()
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [senha, setSenha] = useState('')
+  const [erro, setErro] = useState<string | null>(null)
+  const [enviando, setEnviando] = useState(false)
 
-  async function handleSubmit(e: FormEvent) {
+  async function entrar(e: FormEvent) {
     e.preventDefault()
-    setError(null)
-    setLoading(true)
+    setErro(null)
+    setEnviando(true)
     try {
-      await login(email, password)
-      router.push('/', 'root', 'replace')
+      await login(email, senha)
+      history.replace('/app')
     } catch (err) {
-      setError(err instanceof ApiError ? 'Credenciais inválidas.' : 'Erro ao entrar.')
+      setErro(
+        err instanceof ApiError
+          ? 'E-mail ou senha incorretos.'
+          : 'Não foi possível entrar. Tente novamente.',
+      )
     } finally {
-      setLoading(false)
+      setEnviando(false)
     }
   }
 
   return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar color="primary">
-          <IonTitle>Entrar</IonTitle>
-        </IonToolbar>
-      </IonHeader>
-      <IonContent className="ion-padding">
-        <form onSubmit={handleSubmit}>
-          <IonList inset>
-            <IonItem>
-              <IonInput
-                type="email"
-                label="E-mail"
-                labelPlacement="floating"
-                value={email}
-                onIonInput={(e) => setEmail(e.detail.value ?? '')}
-                required
-              />
-            </IonItem>
-            <IonItem>
-              <IonInput
-                type="password"
-                label="Senha"
-                labelPlacement="floating"
-                value={password}
-                onIonInput={(e) => setPassword(e.detail.value ?? '')}
-                required
-              />
-            </IonItem>
-          </IonList>
-          {error && (
-            <IonText color="danger">
-              <p className="ion-padding-start">{error}</p>
-            </IonText>
-          )}
-          <IonButton type="submit" expand="block" disabled={loading}>
-            {loading ? 'Entrando…' : 'Entrar'}
-          </IonButton>
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-canvas px-4 py-10">
+      <Link to="/" className="mb-7">
+        <Logo />
+      </Link>
+
+      <Card className="w-full max-w-sm p-7">
+        <h1 className="text-xl font-semibold">Entrar</h1>
+        <p className="mt-1 text-sm text-ink-muted">Acesse o painel das suas viagens.</p>
+
+        <form onSubmit={entrar} className="mt-6 space-y-4">
+          {erro && <Alert>{erro}</Alert>}
+
+          <Field label="E-mail">
+            <Input
+              type="email"
+              autoComplete="email"
+              placeholder="voce@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </Field>
+
+          <Field label="Senha">
+            <Input
+              type="password"
+              autoComplete="current-password"
+              placeholder="••••••••"
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              required
+            />
+          </Field>
+
+          <Button type="submit" block size="lg" loading={enviando}>
+            {enviando ? 'Entrando…' : 'Entrar'}
+          </Button>
         </form>
 
-        {/* Caminho para o Google: habilita ao configurar GOOGLE_OAUTH_* no backend */}
-        <IonButton expand="block" fill="outline" disabled>
-          Entrar com Google (a configurar)
-        </IonButton>
-
-        <IonNote className="ion-padding-start">
-          Não tem conta? <Link to="/register">Cadastre-se</Link>
-        </IonNote>
-      </IonContent>
-    </IonPage>
+        <p className="mt-6 text-center text-sm text-ink-muted">
+          Não tem conta?{' '}
+          <Link to="/register" className="font-medium text-brand-600 hover:underline">
+            Criar conta grátis
+          </Link>
+        </p>
+      </Card>
+    </div>
   )
 }

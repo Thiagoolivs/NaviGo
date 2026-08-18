@@ -1,36 +1,22 @@
-import {
-  IonBackButton,
-  IonButton,
-  IonButtons,
-  IonCard,
-  IonCardContent,
-  IonCardHeader,
-  IonCardSubtitle,
-  IonCardTitle,
-  IonCheckbox,
-  IonChip,
-  IonContent,
-  IonHeader,
-  IonInput,
-  IonItem,
-  IonLabel,
-  IonList,
-  IonListHeader,
-  IonNote,
-  IonPage,
-  IonSegment,
-  IonSegmentButton,
-  IonSelect,
-  IonSelectOption,
-  IonSpinner,
-  IonText,
-  IonTitle,
-  IonToolbar,
-} from '@ionic/react'
-import { useCallback, useState } from 'react'
-import { useParams } from 'react-router'
-import { useIonViewWillEnter } from '@ionic/react'
+import { useCallback, useEffect, useState } from 'react'
+import { useHistory, useParams } from 'react-router-dom'
 
+import { AppLayout, PageHeader } from '../components/Layout'
+import { Check, Copy, Plus, Share, Sparkles, Trash, Users } from '../components/icons'
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  Field,
+  Input,
+  LinkButton,
+  Loading,
+  Select,
+} from '../components/ui'
+import { brl, cn } from '../lib/format'
 import { ApiError } from '../lib/api/client'
 import {
   BUDGET_CATEGORIES,
@@ -51,22 +37,22 @@ import {
   toggleTask,
 } from '../lib/api/trips'
 
-const brl = (valor: string | number) =>
-  Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+type Aba = 'checklist' | 'orcamento'
 
 export default function TripDetail() {
   const { id } = useParams<{ id: string }>()
   const tripId = Number(id)
+  const history = useHistory()
 
-  const [aba, setAba] = useState<'checklist' | 'orcamento'>('checklist')
+  const [aba, setAba] = useState<Aba>('orcamento')
   const [trip, setTrip] = useState<Trip | null>(null)
   const [tasks, setTasks] = useState<Task[]>([])
   const [itens, setItens] = useState<BudgetItem[]>([])
   const [pricing, setPricing] = useState<Pricing | null>(null)
   const [carregando, setCarregando] = useState(true)
-  const [erro, setErro] = useState<string | null>(null)
+  const [aviso, setAviso] = useState<string | null>(null)
+  const [copiado, setCopiado] = useState(false)
 
-  // novo item de orçamento
   const [categoria, setCategoria] = useState<BudgetCategory>('transport')
   const [valor, setValor] = useState('')
   const [descricao, setDescricao] = useState('')
@@ -85,20 +71,22 @@ export default function TripDetail() {
       setItens(bi)
       setPricing(pr)
     } catch (e) {
-      setErro(e instanceof ApiError ? e.firstMessage : 'Não foi possível carregar a viagem.')
+      if (e instanceof ApiError && (e.status === 401 || e.status === 403)) {
+        history.replace('/login')
+        return
+      }
+      setAviso('Não foi possível carregar a viagem.')
     } finally {
       setCarregando(false)
     }
-  }, [tripId])
+  }, [tripId, history])
 
-  useIonViewWillEnter(() => {
+  useEffect(() => {
     void carregar()
-  })
+  }, [carregar])
 
-  async function alternarTarefa(task: Task) {
-    const atualizada = await toggleTask(task)
-    setTasks((lista) => lista.map((t) => (t.id === task.id ? atualizada : t)))
-  }
+  const publicada = trip?.status === 'published'
+  const linkPublico = trip ? `${window.location.origin}/trip/${trip.slug}` : ''
 
   async function adicionarItem() {
     if (!valor) return
@@ -109,7 +97,7 @@ export default function TripDetail() {
       amount: valor,
       cost_type: tipoCusto,
     })
-    setItens((lista) => [...lista, criado])
+    setItens((l) => [...l, criado])
     setValor('')
     setDescricao('')
     setPricing(await getPricing(tripId))
@@ -117,241 +105,312 @@ export default function TripDetail() {
 
   async function removerItem(itemId: number) {
     await deleteBudgetItem(itemId)
-    setItens((lista) => lista.filter((i) => i.id !== itemId))
+    setItens((l) => l.filter((i) => i.id !== itemId))
     setPricing(await getPricing(tripId))
   }
 
   async function gerarChecklist() {
-    setErro(null)
+    setAviso(null)
     try {
       await runAssistant(tripId)
       setTasks(await listTasks(tripId))
     } catch (e) {
-      setErro(
+      setAviso(
         e instanceof ApiError && e.status === 503
-          ? 'Assistente indisponível — configure GEMINI_API_KEY na API.'
+          ? 'O assistente está indisponível. Você pode adicionar tarefas manualmente depois.'
           : 'Não consegui gerar o checklist agora.',
       )
     }
   }
 
-  async function publicar() {
-    setTrip(await publishTrip(tripId))
+  async function copiarLink() {
+    await navigator.clipboard.writeText(linkPublico)
+    setCopiado(true)
+    setTimeout(() => setCopiado(false), 2500)
   }
 
+  if (carregando) {
+    return (
+      <AppLayout>
+        <Loading />
+      </AppLayout>
+    )
+  }
+
+  const semCustos = itens.length === 0
+  const feitas = tasks.filter((t) => t.done).length
+
   return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar color="primary">
-          <IonButtons slot="start">
-            <IonBackButton defaultHref="/" />
-          </IonButtons>
-          <IonTitle>{trip?.name ?? 'Viagem'}</IonTitle>
-        </IonToolbar>
-        <IonToolbar>
-          <IonSegment value={aba} onIonChange={(e) => setAba(e.detail.value as typeof aba)}>
-            <IonSegmentButton value="checklist">
-              <IonLabel>Checklist</IonLabel>
-            </IonSegmentButton>
-            <IonSegmentButton value="orcamento">
-              <IonLabel>Orçamento</IonLabel>
-            </IonSegmentButton>
-          </IonSegment>
-        </IonToolbar>
-      </IonHeader>
+    <AppLayout>
+      <PageHeader
+        title={trip?.name ?? 'Viagem'}
+        subtitle={trip?.destination}
+        backTo="/app"
+        actions={
+          publicada ? (
+            <LinkButton to={`/app/viagens/${tripId}/participantes`} variant="secondary">
+              <Users className="h-4 w-4" /> Participantes
+            </LinkButton>
+          ) : undefined
+        }
+      />
 
-      <IonContent className="ion-padding">
-        {erro && (
-          <IonText color="warning">
-            <p>{erro}</p>
-          </IonText>
-        )}
+      {aviso && (
+        <div className="mb-5">
+          <Alert tone="warning">{aviso}</Alert>
+        </div>
+      )}
 
-        {carregando ? (
-          <div className="ion-text-center">
-            <IonSpinner />
+      {/* Valor por pessoa + próximo passo */}
+      <Card className="mb-5 overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-4 bg-brand-600 px-5 py-5 text-white">
+          <div>
+            <div className="text-sm text-brand-50">Valor por participante</div>
+            <div className="mt-0.5 text-3xl font-semibold tabular-nums">
+              {brl(pricing?.price_per_participant ?? 0)}
+            </div>
           </div>
-        ) : (
-          <>
-            {trip && (
-              <IonCard>
-                <IonCardHeader>
-                  <IonCardSubtitle>{trip.destination}</IonCardSubtitle>
-                  <IonCardTitle>{brl(pricing?.price_per_participant ?? 0)} por pessoa</IonCardTitle>
-                </IonCardHeader>
-                <IonCardContent>
-                  <IonChip color={trip.status === 'published' ? 'success' : 'medium'}>
-                    {trip.status === 'published' ? 'Publicada' : 'Rascunho'}
-                  </IonChip>
-                  <IonChip>{pricing?.participants ?? 0} participantes</IonChip>
-                  {pricing && Number(pricing.safety_margin_percent) > 0 && (
-                    <IonChip>margem {Number(pricing.safety_margin_percent)}%</IonChip>
-                  )}
-                  {trip.status !== 'published' && (
-                    <IonButton expand="block" className="ion-margin-top" onClick={publicar}>
-                      Publicar e gerar link
-                    </IonButton>
-                  )}
-                  {trip.status === 'published' && (
-                    <IonNote>Link público: /trip/{trip.slug}</IonNote>
-                  )}
-                  <IonButton
-                    expand="block"
-                    fill="outline"
-                    className="ion-margin-top"
-                    routerLink={`/trips/${tripId}/roster`}
+          <div className="text-right text-sm text-brand-50">
+            <div>
+              Base de {pricing?.participants ?? 0} pessoa(s)
+              {pricing && Number(pricing.safety_margin_percent) > 0 &&
+                ` · margem ${Number(pricing.safety_margin_percent)}%`}
+            </div>
+            <div className="mt-0.5">Total estimado {brl(pricing?.estimated_total ?? 0)}</div>
+          </div>
+        </div>
+
+        <CardBody className="bg-canvas">
+          {semCustos ? (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-[15px]">
+                <strong>Próximo passo:</strong> lance os custos da viagem para calcular
+                quanto cada pessoa paga.
+              </p>
+              <Button size="sm" onClick={() => setAba('orcamento')}>
+                Lançar custos
+              </Button>
+            </div>
+          ) : !publicada ? (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-[15px]">
+                <strong>Próximo passo:</strong> publique a viagem para gerar o link de
+                inscrição.
+              </p>
+              <Button
+                size="sm"
+                onClick={async () => setTrip(await publishTrip(tripId))}
+              >
+                <Share className="h-4 w-4" /> Publicar viagem
+              </Button>
+            </div>
+          ) : (
+            <div>
+              <p className="mb-2 text-[15px]">
+                <strong>Compartilhe este link</strong> com o grupo — cada pessoa se
+                inscreve sozinha.
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <code className="min-w-0 flex-1 truncate rounded-lg border border-line bg-white px-3 py-2 text-sm text-ink-soft">
+                  {linkPublico}
+                </code>
+                <Button size="sm" variant="secondary" onClick={copiarLink}>
+                  <Copy className="h-4 w-4" />
+                  {copiado ? 'Copiado!' : 'Copiar'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardBody>
+      </Card>
+
+      {/* Abas */}
+      <div className="mb-5 inline-flex rounded-lg border border-line bg-white p-1">
+        {(
+          [
+            ['orcamento', 'Orçamento'],
+            ['checklist', `Checklist${tasks.length ? ` (${feitas}/${tasks.length})` : ''}`],
+          ] as const
+        ).map(([v, label]) => (
+          <button
+            key={v}
+            onClick={() => setAba(v)}
+            className={cn(
+              'rounded-md px-4 py-2 text-sm font-medium transition',
+              aba === v ? 'bg-brand-600 text-white' : 'text-ink-soft hover:bg-black/5',
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {aba === 'orcamento' && (
+        <div className="space-y-5">
+          <Card>
+            <CardHeader
+              title="Custos da viagem"
+              subtitle="Custos fixos são divididos entre todos; custos por pessoa são multiplicados."
+            />
+            {itens.length === 0 ? (
+              <CardBody>
+                <p className="text-[15px] text-ink-muted">
+                  Nenhum custo lançado ainda. Comece pelo transporte ou pela hospedagem.
+                </p>
+              </CardBody>
+            ) : (
+              <ul className="divide-y divide-line">
+                {itens.map((item) => (
+                  <li key={item.id} className="flex items-center gap-4 px-5 py-3.5">
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium">
+                        {BUDGET_CATEGORIES.find((c) => c.value === item.category)?.label}
+                      </div>
+                      <div className="mt-0.5 text-sm text-ink-muted">
+                        {item.description || 'Sem descrição'} ·{' '}
+                        {item.cost_type === 'fixed' ? 'fixo (rateado)' : 'por pessoa'}
+                      </div>
+                    </div>
+                    <span className="font-medium tabular-nums">{brl(item.amount)}</span>
+                    <button
+                      onClick={() => removerItem(item.id)}
+                      className="rounded-lg p-2 text-ink-muted transition hover:bg-red-50 hover:text-red-600"
+                      aria-label={`Remover ${item.description || 'custo'}`}
+                    >
+                      <Trash className="h-4 w-4" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+
+          <Card>
+            <CardHeader title="Adicionar custo" />
+            <CardBody className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Categoria">
+                  <Select
+                    value={categoria}
+                    onChange={(e) => setCategoria(e.target.value as BudgetCategory)}
                   >
-                    Participantes e pagamentos
-                  </IonButton>
-                </IonCardContent>
-              </IonCard>
-            )}
+                    {BUDGET_CATEGORIES.map((c) => (
+                      <option key={c.value} value={c.value}>
+                        {c.label}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field label="Tipo de custo">
+                  <Select
+                    value={tipoCusto}
+                    onChange={(e) => setTipoCusto(e.target.value as CostType)}
+                  >
+                    <option value="fixed">Fixo — dividido entre todos</option>
+                    <option value="per_person">Por pessoa</option>
+                  </Select>
+                </Field>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Descrição">
+                  <Input
+                    placeholder="Ex.: Ônibus ida e volta"
+                    value={descricao}
+                    onChange={(e) => setDescricao(e.target.value)}
+                  />
+                </Field>
+                <Field label="Valor (R$)">
+                  <Input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    placeholder="0,00"
+                    value={valor}
+                    onChange={(e) => setValor(e.target.value)}
+                  />
+                </Field>
+              </div>
+              <Button onClick={adicionarItem} disabled={!valor}>
+                <Plus className="h-4 w-4" /> Adicionar custo
+              </Button>
+            </CardBody>
+          </Card>
 
-            {aba === 'checklist' && (
-              <>
-                <IonList inset>
-                  <IonListHeader>
-                    <IonLabel>Tarefas</IonLabel>
-                  </IonListHeader>
-                  {tasks.length === 0 && (
-                    <IonItem lines="none">
-                      <IonLabel className="ion-text-wrap">
-                        <IonNote>Nenhuma tarefa ainda.</IonNote>
-                      </IonLabel>
-                    </IonItem>
-                  )}
-                  {tasks.map((task) => (
-                    <IonItem key={task.id}>
-                      <IonCheckbox
-                        checked={task.done}
-                        onIonChange={() => alternarTarefa(task)}
-                        labelPlacement="end"
-                        justify="start"
-                      >
-                        <span className={task.done ? 'ion-text-wrap done' : 'ion-text-wrap'}>
-                          {task.title}
-                        </span>
-                      </IonCheckbox>
-                      {task.source === 'ai' && (
-                        <IonNote slot="end">IA</IonNote>
-                      )}
-                    </IonItem>
-                  ))}
-                </IonList>
-                <IonButton expand="block" fill="outline" onClick={gerarChecklist}>
-                  Gerar checklist com o assistente
-                </IonButton>
-              </>
-            )}
+          {pricing && itens.length > 0 && (
+            <Card>
+              <CardBody className="space-y-2.5 text-[15px]">
+                {[
+                  ['Custos fixos (rateados)', pricing.total_fixed],
+                  ['Custos por pessoa', pricing.total_per_person],
+                ].map(([label, v]) => (
+                  <div key={label as string} className="flex justify-between">
+                    <span className="text-ink-soft">{label}</span>
+                    <span className="tabular-nums">{brl(v as string)}</span>
+                  </div>
+                ))}
+                <div className="flex justify-between border-t border-line pt-2.5 text-lg font-semibold">
+                  <span>Valor por participante</span>
+                  <span className="tabular-nums text-brand-600">
+                    {brl(pricing.price_per_participant)}
+                  </span>
+                </div>
+              </CardBody>
+            </Card>
+          )}
+        </div>
+      )}
 
-            {aba === 'orcamento' && (
-              <>
-                <IonList inset>
-                  <IonListHeader>
-                    <IonLabel>Custos</IonLabel>
-                  </IonListHeader>
-                  {itens.map((item) => (
-                    <IonItem key={item.id}>
-                      <IonLabel className="ion-text-wrap">
-                        <h3>
-                          {BUDGET_CATEGORIES.find((c) => c.value === item.category)?.label}
-                        </h3>
-                        <p>
-                          {item.description || '—'} ·{' '}
-                          {item.cost_type === 'fixed' ? 'fixo (rateado)' : 'por pessoa'}
-                        </p>
-                      </IonLabel>
-                      <IonNote slot="end">{brl(item.amount)}</IonNote>
-                      <IonButton
-                        slot="end"
-                        fill="clear"
-                        color="danger"
-                        onClick={() => removerItem(item.id)}
-                      >
-                        Remover
-                      </IonButton>
-                    </IonItem>
-                  ))}
-                </IonList>
-
-                <IonList inset>
-                  <IonListHeader>
-                    <IonLabel>Adicionar custo</IonLabel>
-                  </IonListHeader>
-                  <IonItem>
-                    <IonSelect
-                      label="Categoria"
-                      value={categoria}
-                      onIonChange={(e) => setCategoria(e.detail.value)}
-                    >
-                      {BUDGET_CATEGORIES.map((c) => (
-                        <IonSelectOption key={c.value} value={c.value}>
-                          {c.label}
-                        </IonSelectOption>
-                      ))}
-                    </IonSelect>
-                  </IonItem>
-                  <IonItem>
-                    <IonSelect
-                      label="Tipo"
-                      value={tipoCusto}
-                      onIonChange={(e) => setTipoCusto(e.detail.value)}
-                    >
-                      <IonSelectOption value="fixed">Fixo (rateado)</IonSelectOption>
-                      <IonSelectOption value="per_person">Por pessoa</IonSelectOption>
-                    </IonSelect>
-                  </IonItem>
-                  <IonItem>
-                    <IonInput
-                      label="Descrição"
-                      labelPlacement="floating"
-                      value={descricao}
-                      onIonInput={(e) => setDescricao(e.detail.value ?? '')}
-                    />
-                  </IonItem>
-                  <IonItem>
-                    <IonInput
-                      type="number"
-                      label="Valor (R$)"
-                      labelPlacement="floating"
-                      value={valor}
-                      onIonInput={(e) => setValor(e.detail.value ?? '')}
-                    />
-                  </IonItem>
-                </IonList>
-                <IonButton expand="block" onClick={adicionarItem} disabled={!valor}>
-                  Adicionar
-                </IonButton>
-
-                {pricing && (
-                  <IonList inset>
-                    <IonItem>
-                      <IonLabel>Custos fixos</IonLabel>
-                      <IonNote slot="end">{brl(pricing.total_fixed)}</IonNote>
-                    </IonItem>
-                    <IonItem>
-                      <IonLabel>Custos por pessoa</IonLabel>
-                      <IonNote slot="end">{brl(pricing.total_per_person)}</IonNote>
-                    </IonItem>
-                    <IonItem>
-                      <IonLabel>
-                        <strong>Valor por participante</strong>
-                      </IonLabel>
-                      <IonNote slot="end" color="primary">
-                        <strong>{brl(pricing.price_per_participant)}</strong>
-                      </IonNote>
-                    </IonItem>
-                    <IonItem lines="none">
-                      <IonLabel>Total estimado</IonLabel>
-                      <IonNote slot="end">{brl(pricing.estimated_total)}</IonNote>
-                    </IonItem>
-                  </IonList>
-                )}
-              </>
-            )}
-          </>
-        )}
-      </IonContent>
-    </IonPage>
+      {aba === 'checklist' && (
+        <Card>
+          <CardHeader
+            title="Checklist da viagem"
+            subtitle={tasks.length ? `${feitas} de ${tasks.length} concluídas` : undefined}
+            action={
+              <Button size="sm" variant="secondary" onClick={gerarChecklist}>
+                <Sparkles className="h-4 w-4" /> Gerar com IA
+              </Button>
+            }
+          />
+          {tasks.length === 0 ? (
+            <CardBody>
+              <p className="text-[15px] text-ink-muted">
+                Nenhuma tarefa ainda. Use o assistente para montar o checklist da viagem.
+              </p>
+            </CardBody>
+          ) : (
+            <ul className="divide-y divide-line">
+              {tasks.map((task) => (
+                <li key={task.id} className="flex items-center gap-3 px-5 py-3.5">
+                  <button
+                    onClick={async () => {
+                      const nova = await toggleTask(task)
+                      setTasks((l) => l.map((t) => (t.id === task.id ? nova : t)))
+                    }}
+                    className={cn(
+                      'flex h-6 w-6 shrink-0 items-center justify-center rounded-md border transition',
+                      task.done
+                        ? 'border-brand-600 bg-brand-600 text-white'
+                        : 'border-line-strong hover:border-brand-500',
+                    )}
+                    aria-label={task.done ? 'Desmarcar tarefa' : 'Concluir tarefa'}
+                  >
+                    {task.done && <Check className="h-4 w-4" />}
+                  </button>
+                  <span
+                    className={cn(
+                      'min-w-0 flex-1 text-[15px]',
+                      task.done && 'text-ink-muted line-through',
+                    )}
+                  >
+                    {task.title}
+                  </span>
+                  {task.source === 'ai' && <Badge tone="brand">IA</Badge>}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+      )}
+    </AppLayout>
   )
 }

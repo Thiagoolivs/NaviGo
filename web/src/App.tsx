@@ -1,8 +1,7 @@
-import { IonApp, IonRouterOutlet, setupIonicReact } from '@ionic/react'
-import { IonReactRouter } from '@ionic/react-router'
-import { Redirect, Route } from 'react-router-dom'
+import { BrowserRouter, Redirect, Route, Switch } from 'react-router-dom'
 
 import Dashboard from './pages/Dashboard'
+import Landing from './pages/Landing'
 import Login from './pages/Login'
 import NewTrip from './pages/NewTrip'
 import PixAccount from './pages/PixAccount'
@@ -13,29 +12,27 @@ import Subscribe from './pages/Subscribe'
 import TripDetail from './pages/TripDetail'
 import TripPayment from './pages/TripPayment'
 
-setupIonicReact()
-
 export default function App() {
   return (
-    <IonApp>
-      <IonReactRouter>
-        <IonRouterOutlet>
-          {/* Área do organizador (autenticada) */}
-          <Route exact path="/" component={Dashboard} />
-          <Route exact path="/trips/new" component={NewTrip} />
-          <Route exact path="/trips/:id" component={TripDetail} />
-          <Route exact path="/trips/:id/roster" component={Roster} />
-          <Route exact path="/pix-account" component={PixAccount} />
-          {/* Autenticação */}
-          <Route exact path="/login" component={Login} />
-          <Route exact path="/register" component={Register} />
-          {/* Página pública da viagem, acessada por link/QR */}
-          <Route exact path="/trip/:slug" component={PublicTrip} />
-          <Route exact path="/trip/:slug/subscribe" component={Subscribe} />
-          <Route exact path="/trip/:slug/payment" component={TripPayment} />
-          <Route render={() => <Redirect to="/" />} />
-        </IonRouterOutlet>
-      </IonReactRouter>
-    </IonApp>
+    <BrowserRouter>
+      <Switch>
+        {/* Público */}
+        <Route exact path="/" component={Landing} />
+        <Route exact path="/login" component={Login} />
+        <Route exact path="/register" component={Register} />
+        <Route exact path="/trip/:slug" component={PublicTrip} />
+        <Route exact path="/trip/:slug/inscricao" component={Subscribe} />
+        <Route exact path="/trip/:slug/pagamento" component={TripPayment} />
+
+        {/* Organizador (autenticado) */}
+        <Route exact path="/app" component={Dashboard} />
+        <Route exact path="/app/viagens/nova" component={NewTrip} />
+        <Route exact path="/app/viagens/:id" component={TripDetail} />
+        <Route exact path="/app/viagens/:id/participantes" component={Roster} />
+        <Route exact path="/pix-account" component={PixAccount} />
+
+        <Route render={() => <Redirect to="/" />} />
+      </Switch>
+    </BrowserRouter>
   )
 }
