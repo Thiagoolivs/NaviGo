@@ -1,9 +1,11 @@
 from django.urls import include, path
 
-from .views import GoogleLogin
+from .views import GoogleLogin, csrf
 
 # Montado sob /api/v1/auth/
 urlpatterns = [
+    # Entrega o cookie csrftoken para o PWA
+    path("csrf/", csrf, name="csrf"),
     # login, logout, user, troca/reset de senha
     path("", include("dj_rest_auth.urls")),
     # cadastro (registration) e verificação de e-mail

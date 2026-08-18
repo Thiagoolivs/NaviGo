@@ -15,7 +15,7 @@ import {
 import { type FormEvent, useState } from 'react'
 import { Link } from 'react-router-dom'
 
-import { AuthError, register } from '../lib/api/auth'
+import { ApiError, register } from '../lib/api/auth'
 
 export default function Register() {
   const router = useIonRouter()
@@ -29,13 +29,12 @@ export default function Register() {
     setError(null)
     setLoading(true)
     try {
+      // register() cadastra e já autentica (o login é quem define o cookie).
       await register(email, password)
-      // O cadastro já autentica (cookie JWT). Vai para o painel.
       router.push('/', 'root', 'replace')
     } catch (err) {
-      if (err instanceof AuthError) {
-        const first = Object.values(err.detail)[0]
-        setError(Array.isArray(first) ? String(first[0]) : 'Verifique os dados.')
+      if (err instanceof ApiError) {
+        setError(err.firstMessage)
       } else {
         setError('Erro ao cadastrar.')
       }

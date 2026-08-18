@@ -4,8 +4,9 @@ Mapa das telas e dos fluxos do sistema, para os dois atores principais:
 **organizador** (quem cria e gere a viagem) e **participante** (quem se inscreve
 e paga). Marca a fase de cada tela (🟢 MVP · ⭐ Pro · 🏢 Business).
 
-> Estado atual (Fase 0/1): já existem os esqueletos de **Login**, **Cadastro**,
-> **Painel** e **Página pública da viagem** no PWA (`web/src/pages`).
+> Estado atual (Fase 1): **Login**, **Cadastro**, **Painel**, **Criar viagem
+> (assistente)**, **Detalhe da viagem**, **Página pública**, **Inscrição do
+> participante** e **Gestão (participantes e pagamentos)** implementadas.
 
 ---
 
@@ -130,11 +131,25 @@ flowchart LR
 | **Relatórios / pós-viagem** | ⭐ | Financeiro, participantes, avaliações; **duplicar viagem** |
 | **Check-in (dia da viagem)** | ⭐ | Leitura de **QR** por câmera + lista digital |
 
+### 4.2.b Gestão da viagem (a "planilha", porém melhor)
+
+Substitui a planilha do organizador: uma linha por participante, com filtros e
+busca, mostrando de uma vez **pagamento** e **documentos entregues**.
+
+| Bloco | Conteúdo |
+|-------|----------|
+| **Resumo** | Inscritos · pagos · a pagar · atrasados · falta documento · menores · recebido / a receber / esperado |
+| **Filtros** | Todos · Pagos · Parciais · A pagar · Atrasados · Falta documento · Menores |
+| **Linha do participante** | Situação do pagamento, quanto pagou de quanto, nº de parcelas, e o que falta entregar |
+| **Detalhe (expandir)** | Contato, responsável (se menor), embarque, camiseta, restrição alimentar, observações médicas |
+| **Documentos** | Marcar entregue/não entregue (autorização, ficha médica, RG...) |
+| **Parcelas** | Marcar paga/não paga e **re-parcelar** (mais ou menos parcelas), preservando o já pago |
+
 ### 4.3 Participante (público)
 | Tela | Fase | Conteúdo |
 |------|------|----------|
-| **Página da viagem** | 🟢 | Destino, datas, valor, o que inclui, botão de inscrição |
-| **Inscrição** | 🟢 | Dados do participante + aceite dos termos |
+| **Página da viagem** | 🟢 | Destino, datas, vagas, botão de inscrição |
+| **Inscrição** | 🟢 | Dados pessoais, menor + responsável, saúde (restrição, medicamentos, plano), camiseta, embarque, **escolha do parcelamento** e aceite LGPD |
 | **Pagamento PIX** | 🟢 | QR Code + copia e cola; status atualiza após a baixa |
 | **Meu status** | 🟢 | Situação da inscrição e das parcelas |
 
@@ -150,17 +165,15 @@ flowchart LR
 
 | Rota | Tela | Existe? |
 |------|------|---------|
-| `/login` | Login | ✅ esqueleto |
-| `/register` | Cadastro | ✅ esqueleto |
-| `/` | Painel | ✅ esqueleto |
-| `/trip/:slug` | Página pública da viagem | ✅ esqueleto |
-| `/trips/new` | Criar viagem (assistente) | ⬜ Fase 1 |
-| `/trips/:id/budget` | Orçamento | ⬜ Fase 1 |
-| `/trips/:id/participants` | Participantes | ⬜ Fase 1 |
-| `/trips/:id/payments` | Pagamentos | ⬜ Fase 1 |
-| `/trips/:id/tasks` | Checklist & tarefas | ⬜ Fase 1 |
-| `/trip/:slug/subscribe` | Inscrição | ⬜ Fase 1 |
-| `/trip/:slug/pay` | Pagamento PIX | ⬜ Fase 1 |
+| `/login` | Login | ✅ |
+| `/register` | Cadastro | ✅ |
+| `/` | Painel (lista de viagens) | ✅ |
+| `/trip/:slug` | Página pública da viagem | ✅ |
+| `/trips/new` | Criar viagem (assistente) | ✅ |
+| `/trips/:id` | Detalhe: checklist + orçamento | ✅ |
+| `/trip/:slug/subscribe` | Inscrição do participante | ✅ |
+| `/trips/:id/roster` | Gestão: participantes e pagamentos | ✅ |
+| `/trip/:slug/pay` | Pagamento PIX (participante) | ⬜ Fase 1 |
 
 > As rotas de `/trips/:id/*` são a área autenticada do organizador; `/trip/:slug`
 > (singular) é a área pública do participante.

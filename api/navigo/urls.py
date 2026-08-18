@@ -9,9 +9,9 @@ from django.urls import include, path
 api_v1_patterns = [
     path("", include("apps.common.urls")),
     path("auth/", include("apps.accounts.urls")),
-    # Rotas dos apps entram aqui à medida que forem implementadas:
-    # path("trips/", include("apps.trips.urls")),
-    # path("payments/", include("apps.payments.urls")),
+    path("", include("apps.trips.urls")),
+    path("", include("apps.participants.urls")),
+    path("", include("apps.payments.urls")),
 ]
 
 urlpatterns = [

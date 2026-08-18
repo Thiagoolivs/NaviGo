@@ -4,7 +4,11 @@ FROM python:3.11-slim
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     UV_COMPILE_BYTECODE=1 \
-    UV_LINK_MODE=copy
+    UV_LINK_MODE=copy \
+    DJANGO_SETTINGS_MODULE=navigo.settings \
+    # Usa o venv diretamente: evita que `uv run` tente re-sincronizar
+    # (e reinstalar dependências de dev) durante o build e no start.
+    PATH="/app/.venv/bin:$PATH"
 
 WORKDIR /app
 
@@ -18,10 +22,11 @@ RUN uv sync --frozen --no-dev
 # Código da aplicação
 COPY . .
 
-# Coleta os arquivos estáticos (não precisa de banco)
-RUN uv run python manage.py collectstatic --noinput
+# Coleta os arquivos estáticos (não precisa de banco).
+# DJANGO_DEBUG=false garante o storage comprimido do WhiteNoise.
+RUN DJANGO_DEBUG=false DJANGO_SECRET_KEY=build-only python manage.py collectstatic --noinput
 
 EXPOSE 8000
 
-# Aplica migrações e sobe o servidor. O Railway injeta $PORT.
-CMD ["sh", "-c", "uv run python manage.py migrate --noinput && uv run gunicorn navigo.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 3"]
+# Migra e sobe o servidor. O Railway injeta $PORT.
+CMD ["sh", "-c", "python manage.py migrate --noinput && exec gunicorn navigo.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 3 --timeout 60 --access-logfile -"]

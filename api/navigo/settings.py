@@ -190,11 +190,21 @@ CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://localhost:6379/0")
 CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default="redis://localhost:6379/1")
 CELERY_TASK_ALWAYS_EAGER = env.bool("CELERY_TASK_ALWAYS_EAGER", default=DEBUG)
 
-# --- Integrações (definidas depois: PSP de PIX e provedor de IA) -------------
+# --- Integrações ------------------------------------------------------------
 # Selecionam a implementação concreta por trás das interfaces em apps.payments
-# e apps.ai. Enquanto não definidos, usam os stubs "dummy".
+# e apps.ai. Sem credenciais configuradas, mantenha "dummy".
 PAYMENT_PROVIDER = env("PAYMENT_PROVIDER", default="dummy")
 AI_PROVIDER = env("AI_PROVIDER", default="dummy")
+
+# Asaas (PSP de PIX). Use o ambiente sandbox para testes.
+ASAAS_API_KEY = env("ASAAS_API_KEY", default="")
+ASAAS_API_URL = env("ASAAS_API_URL", default="https://api-sandbox.asaas.com/v3")
+# Token que o Asaas envia no header `asaas-access-token` dos webhooks.
+ASAAS_WEBHOOK_TOKEN = env("ASAAS_WEBHOOK_TOKEN", default="")
+
+# Google Gemini (assistente de IA).
+GEMINI_API_KEY = env("GEMINI_API_KEY", default="")
+GEMINI_MODEL = env("GEMINI_MODEL", default="gemini-2.0-flash")
 
 # --- Internacionalização ----------------------------------------------------
 LANGUAGE_CODE = "pt-br"

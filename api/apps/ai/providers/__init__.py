@@ -6,13 +6,22 @@ from django.conf import settings
 
 from .base import AiAssistant, TripStructureSuggestion
 from .dummy import DummyAiAssistant
+from .gemini import GeminiAiAssistant, GeminiError
 
-__all__ = ["AiAssistant", "TripStructureSuggestion", "get_ai_assistant"]
+__all__ = [
+    "AiAssistant",
+    "DummyAiAssistant",
+    "GeminiAiAssistant",
+    "GeminiError",
+    "TripStructureSuggestion",
+    "get_ai_assistant",
+]
 
 
 def get_ai_assistant() -> AiAssistant:
     provider = getattr(settings, "AI_PROVIDER", "dummy")
     if provider == "dummy":
         return DummyAiAssistant()
-    # TODO: implementar anthropic / openai quando o provedor for escolhido.
-    raise NotImplementedError(f"Provedor de IA '{provider}' ainda não implementado.")
+    if provider == "gemini":
+        return GeminiAiAssistant()
+    raise NotImplementedError(f"Provedor de IA '{provider}' não suportado.")
