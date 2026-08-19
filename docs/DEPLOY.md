@@ -105,6 +105,7 @@ Para o MVP, o serviço único do passo 1 é mais simples.
 | `CSRF verification failed` no PWA | Origem do front não confiável | Adicione a URL do PWA em `CSRF_TRUSTED_ORIGINS` e em `CORS_ALLOWED_ORIGINS` |
 | Erro de conexão com o banco | Plugin PostgreSQL ausente | Adicione o plugin (ele injeta `DATABASE_URL`) |
 | Falha em `collectstatic` no build | Variável faltando | O build já passa `DJANGO_SECRET_KEY=build-only`; verifique alterações no `settings.py` |
+| Logs de inicialização aparecem **em vermelho** com o filtro `level: error` | O gunicorn escrevia no stderr, e o Railway trata stderr como erro | Já corrigido pelo `api/gunicorn.conf.py`, que envia os logs para o stdout. **Confira o status do deploy no topo da tela** — se estiver `Success`, o app está no ar |
 
 > A imagem usa **apenas pip e a imagem oficial do Python** — sem depender de um
 > segundo registry para instalar dependências.

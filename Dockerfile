@@ -42,4 +42,6 @@ RUN DJANGO_DEBUG=false DJANGO_SECRET_KEY=build-only python manage.py collectstat
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "python manage.py migrate --noinput && exec gunicorn navigo.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 3 --timeout 60 --access-logfile -"]
+# A config do gunicorn lê $PORT e envia os logs para o stdout (senão o
+# Railway marca a inicialização como "error", por vir do stderr).
+CMD ["sh", "-c", "python manage.py migrate --noinput && exec gunicorn navigo.wsgi:application -c gunicorn.conf.py"]
