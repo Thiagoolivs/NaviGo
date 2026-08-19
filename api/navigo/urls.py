@@ -15,6 +15,7 @@ api_v1_patterns = [
     path("", include("apps.trips.urls")),
     path("", include("apps.participants.urls")),
     path("", include("apps.payments.urls")),
+    path("ai/", include("apps.ai.urls")),
 ]
 
 urlpatterns = [

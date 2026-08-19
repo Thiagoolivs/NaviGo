@@ -116,8 +116,8 @@ export default function TripDetail() {
       setTasks(await listTasks(tripId))
     } catch (e) {
       setAviso(
-        e instanceof ApiError && e.status === 503
-          ? 'O assistente está indisponível. Você pode adicionar tarefas manualmente depois.'
+        e instanceof ApiError
+          ? `O assistente falhou: ${e.firstMessage}`
           : 'Não consegui gerar o checklist agora.',
       )
     }
