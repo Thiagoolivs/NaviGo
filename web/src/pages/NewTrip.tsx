@@ -87,8 +87,8 @@ export default function NewTrip() {
         setResultado(await runAssistant(trip.id))
       } catch (e) {
         setAviso(
-          e instanceof ApiError && e.status === 503
-            ? 'A viagem foi criada, mas o assistente está indisponível no momento. Você pode montar o checklist manualmente.'
+          e instanceof ApiError
+            ? `A viagem foi criada, mas o assistente falhou: ${e.firstMessage}`
             : 'A viagem foi criada, mas não consegui gerar o checklist agora.',
         )
       }

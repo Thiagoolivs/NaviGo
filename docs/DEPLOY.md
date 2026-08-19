@@ -75,12 +75,18 @@ Para o MVP, o serviço único do passo 1 é mais simples.
 - **E-mail real (Resend):** `EMAIL_BACKEND=anymail.backends.resend.EmailBackend`
   e `RESEND_API_KEY=...`. Sem isso, e-mails (ex.: reset de senha) aparecem no log.
 - **Google login:** `GOOGLE_OAUTH_CLIENT_ID` e `GOOGLE_OAUTH_CLIENT_SECRET`.
-- **Assistente de IA (Gemini):** `AI_PROVIDER=gemini` + `GEMINI_API_KEY=...`
-  (opcional `GEMINI_MODEL`, padrão `gemini-2.0-flash`). Sem isso, o assistente
-  usa o stub `dummy` — o app funciona, com um checklist genérico.
-- **PIX (Asaas):** `PAYMENT_PROVIDER=asaas` + `ASAAS_API_KEY=...` e
-  `ASAAS_API_URL` (sandbox por padrão). Configure o webhook no painel do Asaas
-  apontando para a API e use o mesmo token em `ASAAS_WEBHOOK_TOKEN`.
+- **Assistente de IA (Gemini):** basta definir **`GEMINI_API_KEY`** — o provedor
+  é ativado automaticamente (opcional: `GEMINI_MODEL`, padrão
+  `gemini-2.0-flash`). Sem a chave, o assistente responde com um checklist
+  genérico. Para desligar mantendo a chave, use `AI_PROVIDER=dummy`.
+
+  Confira em produção, autenticado:
+  - `GET /api/v1/ai/status/` → provedor ativo, modelo e se a chave foi lida
+  - `POST /api/v1/ai/check/` → faz uma chamada real e devolve um checklist de
+    exemplo (ou o erro exato do provedor)
+- **PIX (Asaas):** basta definir **`ASAAS_API_KEY`** (e `ASAAS_API_URL`, que já
+  aponta para o sandbox). Configure o webhook no painel do Asaas apontando para
+  a API e use o mesmo token em `ASAAS_WEBHOOK_TOKEN`.
 - **Redis/Celery (quando houver tarefas assíncronas):** adicione o plugin Redis,
   defina `CELERY_BROKER_URL`/`CELERY_RESULT_BACKEND` e remova
   `CELERY_TASK_ALWAYS_EAGER`.

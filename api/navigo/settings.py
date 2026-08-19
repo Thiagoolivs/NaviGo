@@ -193,9 +193,6 @@ CELERY_TASK_ALWAYS_EAGER = env.bool("CELERY_TASK_ALWAYS_EAGER", default=DEBUG)
 # --- Integrações ------------------------------------------------------------
 # Selecionam a implementação concreta por trás das interfaces em apps.payments
 # e apps.ai. Sem credenciais configuradas, mantenha "dummy".
-PAYMENT_PROVIDER = env("PAYMENT_PROVIDER", default="dummy")
-AI_PROVIDER = env("AI_PROVIDER", default="dummy")
-
 # Asaas (PSP de PIX). Use o ambiente sandbox para testes.
 ASAAS_API_KEY = env("ASAAS_API_KEY", default="")
 ASAAS_API_URL = env("ASAAS_API_URL", default="https://api-sandbox.asaas.com/v3")
@@ -205,6 +202,14 @@ ASAAS_WEBHOOK_TOKEN = env("ASAAS_WEBHOOK_TOKEN", default="")
 # Google Gemini (assistente de IA).
 GEMINI_API_KEY = env("GEMINI_API_KEY", default="")
 GEMINI_MODEL = env("GEMINI_MODEL", default="gemini-2.0-flash")
+
+# Os provedores são detectados pela credencial: basta definir a chave para o
+# provedor entrar em uso. `AI_PROVIDER`/`PAYMENT_PROVIDER` continuam existindo
+# para forçar um valor (inclusive "dummy", para desligar sem apagar a chave).
+AI_PROVIDER = env("AI_PROVIDER", default="gemini" if GEMINI_API_KEY else "dummy")
+PAYMENT_PROVIDER = env(
+    "PAYMENT_PROVIDER", default="asaas" if ASAAS_API_KEY else "dummy"
+)
 
 # --- Internacionalização ----------------------------------------------------
 LANGUAGE_CODE = "pt-br"
